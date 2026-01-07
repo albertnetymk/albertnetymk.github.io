@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Solving Water Jug Problem by Contradiction"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2017/06/10/water_jug/"/>
+
+
+<meta name="description" content="§The problem Given unlimited amount of water and two water jugs, of capacity 5 and 3 liters, respectively. Can you get 4 liters of water? If so, how? §“Ordinary” Solution Before looking at how to solv">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Solving Water Jug Problem by Contradiction">
+<meta property="og:url" content="https://albertnetymk.github.io/2017/06/10/water_jug/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="§The problem Given unlimited amount of water and two water jugs, of capacity 5 and 3 liters, respectively. Can you get 4 liters of water? If so, how? §“Ordinary” Solution Before looking at how to solv">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-06-10T19:44:20.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Solving Water Jug Problem by Contradiction - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Solving Water Jug Problem by Contradiction
+        
+      </h1>
+
+      <time class="post-time">
+          Jun 10 2017
+      </time>
+    </header>
+
+    <div class="post-content">
+    <h2 id="The-problem"><a class="header-anchor" href="#The-problem">§</a>The problem</h2>
+<p>Given unlimited amount of water and two water jugs, of capacity 5 and 3 liters, respectively. Can you get 4 liters of water? If so, how?</p>
+<h2 id="“Ordinary”-Solution"><a class="header-anchor" href="#“Ordinary”-Solution">§</a>“Ordinary” Solution</h2>
+<p>Before looking at how to solve it using contradiction, let’s try to tackle normally. Traversing the state graph using breadth-first search should do
+the job.</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&#123;-# LANGUAGE RecordWildCards #-&#125;</span></span><br><span class="line"><span class="keyword">import</span> Data.List</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">Step</span> = <span class="type">FillBig</span></span></span><br><span class="line">          | <span class="type">FillSmall</span></span><br><span class="line">          | <span class="type">EmptyBig</span></span><br><span class="line">          | <span class="type">EmptySmall</span></span><br><span class="line">          | <span class="type">SmallIntoBig</span></span><br><span class="line">          | <span class="type">BigIntoSmall</span></span><br><span class="line">          <span class="keyword">deriving</span> (<span class="type">Show</span>, <span class="type">Eq</span>, <span class="type">Ord</span>, <span class="type">Enum</span>, <span class="type">Bounded</span>)</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">State</span> = <span class="type">State</span></span></span><br><span class="line">  &#123; bigJug :: <span class="type">Int</span></span><br><span class="line">  , smallJug :: <span class="type">Int</span></span><br><span class="line">  &#125; <span class="keyword">deriving</span> (<span class="type">Show</span>, <span class="type">Eq</span>)</span><br><span class="line"></span><br><span class="line"><span class="title">big_capacity</span> = <span class="number">5</span></span><br><span class="line"><span class="title">small_capacity</span> = <span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="title">fsm</span> :: <span class="type">State</span> -&gt; <span class="type">Step</span> -&gt; <span class="type">State</span></span><br><span class="line"><span class="title">fsm</span> s <span class="type">FillBig</span> = s &#123; bigJug = big_capacity &#125;</span><br><span class="line"><span class="title">fsm</span> s <span class="type">FillSmall</span> = s &#123; smallJug = small_capacity &#125;</span><br><span class="line"><span class="title">fsm</span> s <span class="type">EmptyBig</span> = s &#123; bigJug = <span class="number">0</span> &#125;</span><br><span class="line"><span class="title">fsm</span> s <span class="type">EmptySmall</span> = s &#123; smallJug = <span class="number">0</span> &#125;</span><br><span class="line"><span class="title">fsm</span> (<span class="type">State</span> big small) <span class="type">SmallIntoBig</span> =</span><br><span class="line">    <span class="keyword">let</span> big&#x27; = min big_capacity (big + small) <span class="keyword">in</span></span><br><span class="line">    <span class="type">State</span> &#123; bigJug = big&#x27;</span><br><span class="line">          , smallJug = small - (big&#x27; - big) &#125;</span><br><span class="line"><span class="title">fsm</span> (<span class="type">State</span> big small) <span class="type">BigIntoSmall</span> =</span><br><span class="line">    <span class="keyword">let</span> small&#x27; = min small_capacity (big + small) <span class="keyword">in</span></span><br><span class="line">    <span class="type">State</span> &#123; bigJug = big - (small&#x27; - small)</span><br><span class="line">          , smallJug = small&#x27; &#125;</span><br><span class="line"></span><br><span class="line"><span class="title">water_jug</span> :: [<span class="type">Step</span>]</span><br><span class="line"><span class="title">water_jug</span> = loop [(initial, [])]</span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">  initial = <span class="type">State</span>&#123; bigJug = <span class="number">0</span>, smallJug = <span class="number">0</span> &#125;</span><br><span class="line">  goal (<span class="type">State</span>&#123;..&#125;, _) = bigJug == <span class="number">4</span></span><br><span class="line"></span><br><span class="line">  loop :: [(<span class="type">State</span>, [<span class="type">Step</span>])] -&gt; [<span class="type">Step</span>]</span><br><span class="line">  loop frontier</span><br><span class="line">    | <span class="type">Just</span> (_, steps) &lt;- find goal frontier = reverse steps</span><br><span class="line">    | otherwise = loop $ concatMap expand frontier</span><br><span class="line"></span><br><span class="line">  expand (state, history) = [(fsm state step, step:history) | step &lt;- enumFrom <span class="type">FillBig</span>]</span><br><span class="line"></span><br><span class="line"><span class="title">main</span> = <span class="keyword">do</span></span><br><span class="line">  print $ water_jug</span><br><span class="line"></span><br><span class="line"><span class="comment">-- [FillBig,BigIntoSmall,EmptySmall,BigIntoSmall,FillBig,BigIntoSmall]</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="Solution-Haskell"><a class="header-anchor" href="#Solution-Haskell">§</a>Solution (Haskell)</h2>
+<p>The Haskell version is taken from <a target="_blank" rel="noopener" href="http://clrnd.com.ar/posts/2017-04-21-the-water-jug-problem-in-hedgehog.html">http://clrnd.com.ar/posts/2017-04-21-the-water-jug-problem-in-hedgehog.html</a>. I pasted the complete version below with
+minor modification on the list size and the number of test cases before giving up.</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&#123;-# LANGUAGE RecordWildCards #-&#125;</span></span><br><span class="line"><span class="keyword">import</span>           Hedgehog</span><br><span class="line"><span class="keyword">import</span>           Hedgehog.Internal.Property (<span class="type">TestLimit(..)</span>, <span class="type">ShrinkLimit(..)</span>)</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">qualified</span> Hedgehog.Gen <span class="keyword">as</span> Gen</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">qualified</span> Hedgehog.Range <span class="keyword">as</span> Range</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">Step</span> = <span class="type">FillBig</span></span></span><br><span class="line">          | <span class="type">FillSmall</span></span><br><span class="line">          | <span class="type">EmptyBig</span></span><br><span class="line">          | <span class="type">EmptySmall</span></span><br><span class="line">          | <span class="type">SmallIntoBig</span></span><br><span class="line">          | <span class="type">BigIntoSmall</span></span><br><span class="line">          <span class="keyword">deriving</span> (<span class="type">Show</span>, <span class="type">Eq</span>, <span class="type">Ord</span>, <span class="type">Enum</span>, <span class="type">Bounded</span>)</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">State</span> = <span class="type">State</span></span></span><br><span class="line">  &#123; bigJug :: <span class="type">Int</span></span><br><span class="line">  , smallJug :: <span class="type">Int</span></span><br><span class="line">  &#125; <span class="keyword">deriving</span> (<span class="type">Show</span>, <span class="type">Eq</span>)</span><br><span class="line"></span><br><span class="line"><span class="title">initial</span> :: <span class="type">State</span></span><br><span class="line"><span class="title">initial</span> = <span class="type">State</span> &#123; bigJug = <span class="number">0</span>, smallJug = <span class="number">0</span>&#125;</span><br><span class="line"></span><br><span class="line"><span class="title">big_capacity</span> = <span class="number">5</span></span><br><span class="line"><span class="title">small_capacity</span> = <span class="number">3</span></span><br><span class="line"></span><br><span class="line"><span class="title">fsm</span> :: <span class="type">State</span> -&gt; <span class="type">Step</span> -&gt; <span class="type">State</span></span><br><span class="line"><span class="title">fsm</span> s <span class="type">FillBig</span> = s &#123; bigJug = big_capacity &#125;</span><br><span class="line"><span class="title">fsm</span> s <span class="type">FillSmall</span> = s &#123; smallJug = small_capacity &#125;</span><br><span class="line"><span class="title">fsm</span> s <span class="type">EmptyBig</span> = s &#123; bigJug = <span class="number">0</span> &#125;</span><br><span class="line"><span class="title">fsm</span> s <span class="type">EmptySmall</span> = s &#123; smallJug = <span class="number">0</span> &#125;</span><br><span class="line"><span class="title">fsm</span> (<span class="type">State</span> big small) <span class="type">SmallIntoBig</span> =</span><br><span class="line">    <span class="keyword">let</span> big&#x27; = min big_capacity (big + small) <span class="keyword">in</span></span><br><span class="line">    <span class="type">State</span> &#123; bigJug = big&#x27;</span><br><span class="line">          , smallJug = small - (big&#x27; - big) &#125;</span><br><span class="line"><span class="title">fsm</span> (<span class="type">State</span> big small) <span class="type">BigIntoSmall</span> =</span><br><span class="line">    <span class="keyword">let</span> small&#x27; = min small_capacity (big + small) <span class="keyword">in</span></span><br><span class="line">    <span class="type">State</span> &#123; bigJug = big - (small&#x27; - small)</span><br><span class="line">          , smallJug = small&#x27; &#125;</span><br><span class="line"></span><br><span class="line"><span class="title">prop_solution</span> :: <span class="type">Property</span></span><br><span class="line"><span class="title">prop_solution</span> = withTests (<span class="type">TestLimit</span> <span class="number">100000</span>) . property $ <span class="keyword">do</span></span><br><span class="line">    s &lt;- forAll steps</span><br><span class="line">    <span class="keyword">let</span> (<span class="type">State</span> big small) = execute s</span><br><span class="line">    assert $ big /= <span class="number">4</span></span><br><span class="line"> <span class="keyword">where</span></span><br><span class="line">  steps :: <span class="type">Gen</span> [<span class="type">Step</span>]</span><br><span class="line">  steps = <span class="type">Gen</span>.list (<span class="type">Range</span>.linear <span class="number">1</span> <span class="number">20</span>) <span class="type">Gen</span>.enumBounded</span><br><span class="line"></span><br><span class="line">  execute :: [<span class="type">Step</span>] -&gt; <span class="type">State</span></span><br><span class="line">  execute = foldl fsm initial</span><br><span class="line"></span><br><span class="line"><span class="title">main</span> :: <span class="type">IO</span> ()</span><br><span class="line"><span class="title">main</span> = <span class="keyword">do</span></span><br><span class="line">  check prop_solution</span><br><span class="line">  return ()</span><br></pre></td></tr></table></figure>
+<p>The output on my box is:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">✗ &lt;interactive&gt; failed after 9463 tests and 1 shrink.</span><br><span class="line"></span><br><span class="line">     ┏━━ bucket.hs ━━━</span><br><span class="line">  42 ┃ prop_solution :: Property</span><br><span class="line">  43 ┃ prop_solution = withTests (TestLimit 100000) . property $ do</span><br><span class="line">  44 ┃     s &lt;- forAll steps</span><br><span class="line">     ┃     │ [ FillBig</span><br><span class="line">     ┃     │ , BigIntoSmall</span><br><span class="line">     ┃     │ , EmptySmall</span><br><span class="line">     ┃     │ , BigIntoSmall</span><br><span class="line">     ┃     │ , FillBig</span><br><span class="line">     ┃     │ , BigIntoSmall</span><br><span class="line">     ┃     │ ]</span><br><span class="line">  45 ┃     let (State big small) = execute s</span><br><span class="line">  46 ┃     assert $ big /= 4</span><br><span class="line">     ┃     ^^^^^^^^^^^^^^^^^</span><br><span class="line"></span><br><span class="line">  This failure can be reproduced by running:</span><br><span class="line">  &gt; recheck (Size 62) (Seed 546476640955800227 5762280480867254161) &lt;property&gt;</span><br></pre></td></tr></table></figure>
+<p>The result is pretty good with such a straightforward generator, which essentially picks from all possible steps defined by <code>data Step</code>. However, the
+number of test cases is rather large. Is there anything we can do to find the contradiction faster? The key insight is that not all semantically valid
+steps are sensible. For example, when the bug jug is already empty, applying <code>EmpytBig</code> doesn’t make any sense. The “optimized” version below shows
+that <code>candidates</code> prunes possible steps when at least one of the jug is empty while keeps the original behavior otherwise. Additionally, we give up a
+path if it’s too deep, reflected by <code>depth &gt; 10</code>.</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">prop_opt</span> = withTests (<span class="type">TestLimit</span> <span class="number">10000</span>) . property $ simulate <span class="number">0</span> $ initial</span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">    simulate depth s@<span class="type">State</span>&#123;..&#125;</span><br><span class="line">      | depth &gt; <span class="number">10</span> = success</span><br><span class="line">      | otherwise = <span class="keyword">do</span></span><br><span class="line">        assert $ bigJug /= <span class="number">4</span></span><br><span class="line">        step &lt;- forAll $ <span class="type">Gen</span>.element $ candidates bigJug smallJug</span><br><span class="line">        simulate (depth+<span class="number">1</span>) $ fsm s step</span><br><span class="line"></span><br><span class="line">    <span class="comment">-- only use meaningful actions</span></span><br><span class="line">    candidates <span class="number">0</span> <span class="number">0</span> = [<span class="type">FillBig</span>, <span class="type">FillSmall</span>]</span><br><span class="line">    candidates x <span class="number">0</span> = [<span class="type">BigIntoSmall</span>, <span class="type">FillSmall</span>]</span><br><span class="line">    candidates <span class="number">0</span> y = [<span class="type">SmallIntoBig</span>, <span class="type">FillBig</span>]</span><br><span class="line">    candidates x y = [minBound .. maxBound]</span><br></pre></td></tr></table></figure>
+<p>The output on my box is:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">✗ &lt;interactive&gt; failed after 25 tests.</span><br><span class="line"></span><br><span class="line">     ┏━━ /home/albert/Dropbox/dev/program/haskell/src/hello.hs ━━━</span><br><span class="line">  63 ┃ prop_opt = withTests (TestLimit 10000) . property $ simulate 0 $ initial</span><br><span class="line">  64 ┃   where</span><br><span class="line">  65 ┃     simulate depth s@State&#123;..&#125;</span><br><span class="line">  66 ┃       | depth &gt; 10 = success</span><br><span class="line">  67 ┃       | otherwise = do</span><br><span class="line">  68 ┃         assert $ bigJug /= 4</span><br><span class="line">     ┃         ^^^^^^^^^^^^^^^^^^^^</span><br><span class="line">  69 ┃         step &lt;- forAll $ Gen.element $ candidates bigJug smallJug</span><br><span class="line">     ┃         │ FillBig</span><br><span class="line">     ┃         │ BigIntoSmall</span><br><span class="line">     ┃         │ EmptySmall</span><br><span class="line">     ┃         │ BigIntoSmall</span><br><span class="line">     ┃         │ FillBig</span><br><span class="line">     ┃         │ FillBig</span><br><span class="line">     ┃         │ BigIntoSmall</span><br><span class="line">  70 ┃         simulate (depth+1) $ fsm s step</span><br><span class="line">  71 ┃</span><br><span class="line">  72 ┃     -- only use meaningful actions</span><br><span class="line">  73 ┃     candidates 0 0 = [FillBig, FillSmall]</span><br><span class="line">  74 ┃     candidates x 0 = [BigIntoSmall, FillSmall]</span><br><span class="line">  75 ┃     candidates 0 y = [SmallIntoBig, FillBig]</span><br><span class="line">  76 ┃     candidates x y = [minBound .. maxBound]</span><br><span class="line"></span><br><span class="line">  This failure can be reproduced by running:</span><br><span class="line">  &gt; recheck (Size 24) (Seed 17320316036822848788 3613693507781047643) &lt;property&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="Solution-SPIN"><a class="header-anchor" href="#Solution-SPIN">§</a>Solution (SPIN)</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line">byte small, big</span><br><span class="line"></span><br><span class="line">byte small_size = 3</span><br><span class="line">byte big_size = 5</span><br><span class="line"></span><br><span class="line">init &#123;</span><br><span class="line">loop:</span><br><span class="line">  if</span><br><span class="line">  :: big == 4 -&gt;</span><br><span class="line">      /* should fail, we found one solution */</span><br><span class="line">      assert(false)</span><br><span class="line">  :: else</span><br><span class="line">  fi</span><br><span class="line"></span><br><span class="line">  if</span><br><span class="line">  :: small = 0</span><br><span class="line">  :: big = 0</span><br><span class="line">  :: small = small_size</span><br><span class="line">  :: big = big_size</span><br><span class="line">  :: small + big &gt; big_size -&gt; small = (small+big)-big_size; big = big_size</span><br><span class="line">  :: small + big &gt; small_size -&gt;  big = (small+big)-small_size; small = small_size</span><br><span class="line">  :: small + big &lt;= big_size -&gt; big = small + big ; small = 0</span><br><span class="line">  :: small + big &lt;= small_size -&gt; small = small + big ; big = 0</span><br><span class="line">  fi</span><br><span class="line">  assert(big &lt;= big_size &amp;&amp; small &lt;= small_size)</span><br><span class="line">  goto loop</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">$ spin -run -O bucket.pml</span><br><span class="line">pan:1: assertion violated 0 (at depth 71)</span><br><span class="line">pan: wrote bucket.pml.trail</span><br><span class="line">...</span><br><span class="line">$ spin -p -t bucket.pml</span><br><span class="line">using statement merging</span><br><span class="line">  1:    proc  0 (:init::1) bucket.pml:12 (state 3)      [else]</span><br><span class="line">  2:    proc  0 (:init::1) bucket.pml:18 (state 8)      [small = small_size]</span><br><span class="line">  3:    proc  0 (:init::1) bucket.pml:25 (state 24)     [assert(((big&lt;=big_size)&amp;&amp;(small</span><br><span class="line">  4:    proc  0 (:init::1) bucket.pml:12 (state 3)      [else]</span><br><span class="line">  5:    proc  0 (:init::1) bucket.pml:19 (state 9)      [big = big_size]</span><br><span class="line">  6:    proc  0 (:init::1) bucket.pml:25 (state 24)     [assert(((big&lt;=big_size)&amp;&amp;(small</span><br><span class="line">  7:    proc  0 (:init::1) bucket.pml:12 (state 3)      [else]</span><br><span class="line">  8:    proc  0 (:init::1) bucket.pml:16 (state 6)      [small = 0]</span><br><span class="line">  9:    proc  0 (:init::1) bucket.pml:25 (state 24)     [assert(((big&lt;=big_size)&amp;&amp;(small</span><br><span class="line"> 10:    proc  0 (:init::1) bucket.pml:12 (state 3)      [else]</span><br><span class="line"> 11:    proc  0 (:init::1) bucket.pml:21 (state 13)     [(((small+big)&gt;small_size))]</span><br><span class="line"> 12:    proc  0 (:init::1) bucket.pml:21 (state 14)     [big = ((small+big)-small_size)]</span><br><span class="line"> 13:    proc  0 (:init::1) bucket.pml:21 (state 15)     [small = small_size]</span><br><span class="line"> 14:    proc  0 (:init::1) bucket.pml:25 (state 24)     [assert(((big&lt;=big_size)&amp;&amp;(small</span><br><span class="line"> 15:    proc  0 (:init::1) bucket.pml:12 (state 3)      [else]</span><br><span class="line"> 16:    proc  0 (:init::1) bucket.pml:16 (state 6)      [small = 0]</span><br><span class="line"> 17:    proc  0 (:init::1) bucket.pml:25 (state 24)     [assert(((big&lt;=big_size)&amp;&amp;(small</span><br><span class="line"> 18:    proc  0 (:init::1) bucket.pml:12 (state 3)      [else]</span><br><span class="line"> 19:    proc  0 (:init::1) bucket.pml:23 (state 19)     [(((small+big)&lt;=small_size))]</span><br><span class="line"> 20:    proc  0 (:init::1) bucket.pml:23 (state 20)     [small = (small+big)]</span><br><span class="line"> 21:    proc  0 (:init::1) bucket.pml:23 (state 21)     [big = 0]</span><br><span class="line"> 22:    proc  0 (:init::1) bucket.pml:25 (state 24)     [assert(((big&lt;=big_size)&amp;&amp;(small</span><br><span class="line"> 23:    proc  0 (:init::1) bucket.pml:12 (state 3)      [else]</span><br><span class="line"> 24:    proc  0 (:init::1) bucket.pml:19 (state 9)      [big = big_size]</span><br><span class="line"> 25:    proc  0 (:init::1) bucket.pml:25 (state 24)     [assert(((big&lt;=big_size)&amp;&amp;(small</span><br><span class="line"> 26:    proc  0 (:init::1) bucket.pml:12 (state 3)      [else]</span><br><span class="line"> 27:    proc  0 (:init::1) bucket.pml:21 (state 13)     [(((small+big)&gt;small_size))]</span><br><span class="line"> 28:    proc  0 (:init::1) bucket.pml:21 (state 14)     [big = ((small+big)-small_size)]</span><br><span class="line"> 29:    proc  0 (:init::1) bucket.pml:21 (state 15)     [small = small_size]</span><br><span class="line"> 30:    proc  0 (:init::1) bucket.pml:25 (state 24)     [assert(((big&lt;=big_size)&amp;&amp;(small</span><br><span class="line"> 31:    proc  0 (:init::1) bucket.pml:9 (state 1)       [((big==4))]</span><br><span class="line">spin: bucket.pml:11, Error: assertion violated</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<h2 id="Conclusion"><a class="header-anchor" href="#Conclusion">§</a>Conclusion</h2>
+<p>Spin takes less code to solve this problem, but the output is a bit hard to decipher. Property-base testing is a more general technique, so a little
+more boilerplates comparatively. However, the shrinking mechanism is valuable in practice.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

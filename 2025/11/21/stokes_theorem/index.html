@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Calculating Area with Stokes Theorem"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2025/11/21/stokes_theorem/"/>
+
+
+<meta name="description" content="Most of us learn to calculate areas using formulas drilled into memory: length times width for rectangles, πr² for circles. Let’s see another approach hiding in vector calculus – one that works for an">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Calculating Area with Stokes Theorem">
+<meta property="og:url" content="https://albertnetymk.github.io/2025/11/21/stokes_theorem/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Most of us learn to calculate areas using formulas drilled into memory: length times width for rectangles, πr² for circles. Let’s see another approach hiding in vector calculus – one that works for an">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-11-21T17:35:41.000Z">
+<meta property="article:modified_time" content="2025-11-21T22:01:15.577Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Calculating Area with Stokes Theorem - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Calculating Area with Stokes Theorem
+        
+      </h1>
+
+      <time class="post-time">
+          Nov 21 2025
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Most of us learn to calculate areas using formulas drilled into memory: length times width for rectangles, πr² for
+circles. Let’s see another approach hiding in vector calculus – one that works for <em>any</em> shape, no matter how
+irregular. Enter Stokes’ theorem.</p>
+<h2 id="The-Trick"><a class="header-anchor" href="#The-Trick">§</a>The Trick</h2>
+<p>Stokes’ theorem relates a line integral around a closed curve to a surface integral over the region it encloses. For
+area calculation, we can exploit this relationship with a clever choice of vector field.</p>
+<p>The key insight: we need a field <strong>F</strong> whose curl equals 1. Why? Because Stokes’ theorem tells us:</p>
+<p>∮<sub>C</sub> <strong>F</strong> · d<strong>r</strong> = ∫∫<sub>R</sub> (∇ × <strong>F</strong>) · <strong>n</strong> dA</p>
+<p>For planar regions, the curl ∇ × <strong>F</strong> = (∂F₂/∂x - ∂F₁/∂y)<strong>k</strong> points perpendicular to the plane, so this becomes:</p>
+<p>∮<sub>C</sub> <strong>F</strong> · d<strong>r</strong> = ∫∫<sub>R</sub> (∂F₂/∂x - ∂F₁/∂y) dA</p>
+<p>If we make (∂F₂/∂x - ∂F₁/∂y) = 1, the right side becomes ∫∫<sub>R</sub> 1 dA, which is just the area. Any <strong>F</strong>
+satisfying this works—common choices include <strong>F</strong> = (0, x), <strong>F</strong> = (-y, 0), or <strong>F</strong> = (-y/2, x/2). Let’s see them in
+action.</p>
+<h2 id="Example-1-The-Unit-Square"><a class="header-anchor" href="#Example-1-The-Unit-Square">§</a>Example 1: The Unit Square</h2>
+<p>Consider a square with vertices at (0,0), (1,0), (1,1), and (0,1). We’ll traverse the boundary counterclockwise.</p>
+<p>Using <strong>F</strong> = (0, x), the line integral ∮<sub>C</sub> x dy becomes:</p>
+<ul>
+<li>Bottom edge (y=0, dy=0): contributes 0</li>
+<li>Right edge (x=1, y: 0→1): ∫₀¹ 1 dy = 1</li>
+<li>Top edge (y=1, dy=0): contributes 0</li>
+<li>Left edge (x=0, y: 1→0): ∫₁⁰ 0 dy = 0</li>
+</ul>
+<p>Total: 1 square unit. Exactly what we expected.</p>
+<h2 id="Example-2-The-Unit-Circle"><a class="header-anchor" href="#Example-2-The-Unit-Circle">§</a>Example 2: The Unit Circle</h2>
+<p>Now for something curvier. The unit circle x² + y² = 1 can be parameterized as <strong>r</strong>(t) = (cos t, sin t) for t ∈ [0,
+2π].</p>
+<p>This time, let’s use the symmetric field: <strong>F</strong> = (-y/2, x/2). The line integral ∮<sub>C</sub> (-y/2 dx + x/2 dy)
+becomes:</p>
+<p>∮<sub>C</sub> (-y/2 dx + x/2 dy) = ∫₀²<sup>π</sup> (-sin(t)/2 · (-sin t) + cos(t)/2 · cos t) dt</p>
+<p>= ∫₀²<sup>π</sup> (sin²(t)/2 + cos²(t)/2) dt = ∫₀²<sup>π</sup> (sin²(t) + cos²(t))/2 dt</p>
+<p>Using the identity sin²(t) + cos²(t) = 1:</p>
+<p>∫₀²<sup>π</sup> 1/2 dt = π</p>
+<p>Again, π square units—same answer, even cleaner calculation. The symmetric choice <strong>F</strong> = (-y/2, x/2) often simplifies
+circular and elliptical boundaries.</p>
+<h2 id="Why-This-Matters"><a class="header-anchor" href="#Why-This-Matters">§</a>Why This Matters</h2>
+<p>With this technique, we can calculate areas of arbitrary shape.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

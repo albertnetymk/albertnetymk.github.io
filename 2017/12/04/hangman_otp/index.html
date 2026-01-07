@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Distributed Hangman using Erlang/OTP"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2017/12/04/hangman_otp/"/>
+
+
+<meta name="description" content="game.erl implements the game logic using gen_server, accepting &#123;guess, &lt;char&gt;&#125;, replying with the progress of the word, until the whole word is completed. game_server.erl is responsibl">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Distributed Hangman using Erlang&#x2F;OTP">
+<meta property="og:url" content="https://albertnetymk.github.io/2017/12/04/hangman_otp/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="game.erl implements the game logic using gen_server, accepting &#123;guess, &lt;char&gt;&#125;, replying with the progress of the word, until the whole word is completed. game_server.erl is responsibl">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-12-04T05:58:18.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Distributed Hangman using Erlang/OTP - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Distributed Hangman using Erlang/OTP
+        
+      </h1>
+
+      <time class="post-time">
+          Dec 4 2017
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p><code>game.erl</code> implements the game logic using <code>gen_server</code>, accepting <code>&#123;guess, &lt;char&gt;&#125;</code>, replying with the progress of the word, until the whole word is
+completed. <code>game_server.erl</code> is responsible for launching various games, returning a registered name so that players could interact with that game.</p>
+<h3 id="Demo"><a class="header-anchor" href="#Demo">§</a>Demo</h3>
+<p>Running server part on trygger:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">username@trygger:~/erlang$ erlc game*.erl ; erl -setcookie magic -name server</span><br><span class="line">Erlang/OTP 20 [erts-9.1] [source] [64-bit] [smp:16:16] [ds:16:16:10] [async-threads:10] [kernel-poll:false]</span><br><span class="line"></span><br><span class="line">Eshell V9.1  (abort with ^G)</span><br><span class="line">(server@trygger.it.uu.se)1&gt; game_server:start_link().</span><br><span class="line">&#123;ok,&lt;0.71.0&gt;&#125;</span><br><span class="line">(server@trygger.it.uu.se)2&gt; gen_server:call(&#123;global, game_server&#125;, start_game).</span><br><span class="line">&#123;ok,game_0&#125;</span><br><span class="line">(server@trygger.it.uu.se)3&gt;</span><br></pre></td></tr></table></figure>
+<p>Running player part on hedenius:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">username@hedenius:~/erlang$ erlc game*.erl ; erl -setcookie magic -name player -eval &quot;net_adm:ping(&#x27;server@trygger.it.uu.se&#x27;)&quot;</span><br><span class="line">Erlang/OTP 20 [erts-9.1] [source] [64-bit] [smp:16:16] [ds:16:16:10] [async-threads:10] [hipe] [kernel-poll:false]</span><br><span class="line"></span><br><span class="line">Eshell V9.1  (abort with ^G)</span><br><span class="line">(player@hedenius.it.uu.se)1&gt; nodes().</span><br><span class="line">[&#x27;server@trygger.it.uu.se&#x27;]</span><br><span class="line">(player@hedenius.it.uu.se)2&gt; gen_server:call(&#123;global, game_0&#125;, &#123;guess, $a&#125;).</span><br><span class="line">&#123;guessedright,&quot;a _ a _ _ _ _ _ a _ _&quot;&#125;</span><br><span class="line">(player@hedenius.it.uu.se)3&gt; gen_server:call(&#123;global, game_0&#125;, &#123;guess, $d&#125;).</span><br><span class="line">&#123;guessedright,&quot;a d a _ _ _ _ _ a _ _&quot;&#125;</span><br><span class="line">(player@hedenius.it.uu.se)4&gt; gen_server:call(&#123;global, game_0&#125;, &#123;guess, $l&#125;).</span><br><span class="line">&#123;guessedright,&quot;a d a l _ _ _ l a _ _&quot;&#125;</span><br><span class="line">(player@hedenius.it.uu.se)5&gt; gen_server:call(&#123;global, game_0&#125;, &#123;guess, $o&#125;).</span><br><span class="line">&#123;guessedright,&quot;a d a l o _ _ l a _ _&quot;&#125;</span><br><span class="line">(player@hedenius.it.uu.se)6&gt; gen_server:call(&#123;global, game_0&#125;, &#123;guess, $v&#125;).</span><br><span class="line">&#123;guessedright,&quot;a d a l o v _ l a _ _&quot;&#125;</span><br><span class="line">(player@hedenius.it.uu.se)7&gt; gen_server:call(&#123;global, game_0&#125;, &#123;guess, $e&#125;).</span><br><span class="line">&#123;guessedright,&quot;a d a l o v e l a _ e&quot;&#125;</span><br><span class="line">(player@hedenius.it.uu.se)8&gt; gen_server:call(&#123;global, game_0&#125;, &#123;guess, $c&#125;).</span><br><span class="line">&#123;youwin,&quot;a d a l o v e l a c e&quot;&#125;</span><br><span class="line">(player@hedenius.it.uu.se)9&gt;</span><br></pre></td></tr></table></figure>
+<h3 id="Source-code"><a class="header-anchor" href="#Source-code">§</a>Source code</h3>
+<h4 id="game-erl"><a class="header-anchor" href="#game-erl">§</a>game.erl</h4>
+<figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">-module</span><span class="params">(game)</span>.</span><br><span class="line"></span><br><span class="line"><span class="keyword">-behaviour</span><span class="params">(gen_server)</span>.</span><br><span class="line"></span><br><span class="line"><span class="keyword">-export</span><span class="params">([game/<span class="number">2</span>])</span>.</span><br><span class="line"></span><br><span class="line"><span class="comment">%% gen_server callbacks</span></span><br><span class="line"><span class="keyword">-export</span><span class="params">([init/<span class="number">1</span>,</span></span><br><span class="line"><span class="params">         handle_call/<span class="number">3</span>,</span></span><br><span class="line"><span class="params">         handle_cast/<span class="number">2</span>,</span></span><br><span class="line"><span class="params">         handle_info/<span class="number">2</span>,</span></span><br><span class="line"><span class="params">         terminate/<span class="number">2</span>,</span></span><br><span class="line"><span class="params">         code_change/<span class="number">3</span>])</span>.</span><br><span class="line"></span><br><span class="line"><span class="keyword">-record</span><span class="params">(state, &#123;word::[&#123;char(), boolean()&#125;]&#125;)</span>.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">game</span><span class="params">(Name, Word)</span> -&gt;</span></span><br><span class="line">    gen_server:start(&#123;global, Name&#125;, ?MODULE, Word, []).</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">init</span><span class="params">(Word)</span> -&gt;</span></span><br><span class="line">    ProcessedWord = lists:map(<span class="keyword">fun</span>(Char) -&gt; &#123;Char, false&#125; <span class="keyword">end</span>, Word),</span><br><span class="line">    &#123;ok, #state&#123;word = ProcessedWord&#125;&#125;.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">handle_call</span><span class="params">(&#123;guess, Letter&#125;, _From, State = #state&#123;word = Word&#125;)</span> -&gt;</span></span><br><span class="line">    Result = lists:keyfind(Letter, <span class="number">1</span>, Word),</span><br><span class="line"></span><br><span class="line">    <span class="keyword">case</span> Result <span class="keyword">of</span></span><br><span class="line">        <span class="literal">false</span> -&gt;</span><br><span class="line">            &#123;reply, &#123;guessedwrong, formatWord(Word)&#125;, State&#125;;</span><br><span class="line">        &#123;Letter, true&#125; -&gt;</span><br><span class="line">            &#123;reply, &#123;alreadyguessed, formatWord(Word)&#125;, State&#125;;</span><br><span class="line">        &#123;Letter, false&#125; -&gt;</span><br><span class="line">            NewWord = lists:map(</span><br><span class="line">                        <span class="keyword">fun</span></span><br><span class="line">                            (&#123;Char, false&#125;) <span class="keyword">when</span> (Char =:= Letter) -&gt; &#123;Char, true&#125;;</span><br><span class="line">                            (Anything) -&gt; Anything</span><br><span class="line">                        <span class="keyword">end</span>, Word),</span><br><span class="line"></span><br><span class="line">            GameEnd = lists:all(<span class="keyword">fun</span></span><br><span class="line">                                    (&#123;_Anything, Boolean&#125;) -&gt; Boolean</span><br><span class="line">                                <span class="keyword">end</span>, NewWord),</span><br><span class="line"></span><br><span class="line">            <span class="keyword">case</span> GameEnd <span class="keyword">of</span></span><br><span class="line">                <span class="literal">true</span> -&gt;</span><br><span class="line">                    &#123;stop, normal, &#123;youwin, formatWord(NewWord)&#125;, State#state&#123;word = NewWord&#125;&#125;;</span><br><span class="line">                <span class="literal">false</span> -&gt;</span><br><span class="line">                    &#123;reply, &#123;guessedright, formatWord(NewWord)&#125;, State#state&#123;word = NewWord&#125;&#125;</span><br><span class="line">            <span class="keyword">end</span></span><br><span class="line">    <span class="keyword">end</span>;</span><br><span class="line"><span class="function"><span class="title">handle_call</span><span class="params">(_Request, _From, State)</span> -&gt;</span></span><br><span class="line">    &#123;reply, ignored, State&#125;.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">handle_cast</span><span class="params">(_Msg, State)</span> -&gt;</span></span><br><span class="line">    &#123;noreply, State&#125;.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">handle_info</span><span class="params">(_Info, State)</span> -&gt;</span></span><br><span class="line">    &#123;noreply, State&#125;.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">terminate</span><span class="params">(_Reason, _State)</span> -&gt;</span></span><br><span class="line">    ok.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">code_change</span><span class="params">(_OldVsn, State, _Extra)</span> -&gt;</span></span><br><span class="line">    &#123;ok, State&#125;.</span><br><span class="line"></span><br><span class="line"><span class="comment">%% Internal functions</span></span><br><span class="line"><span class="function"><span class="title">formatWord</span><span class="params">(Word)</span> -&gt;</span></span><br><span class="line">    Encrypted = lists:map(</span><br><span class="line">                  <span class="keyword">fun</span></span><br><span class="line">                      (&#123;Letter, true&#125;)   -&gt; Letter;</span><br><span class="line">                      (&#123;_Letter, false&#125;) -&gt; $_</span><br><span class="line">                  <span class="keyword">end</span>, Word),</span><br><span class="line">    Space = $\s,</span><br><span class="line">    lists:join(Space, Encrypted).</span><br></pre></td></tr></table></figure>
+<h4 id="game-server-erl"><a class="header-anchor" href="#game-server-erl">§</a>game_server.erl</h4>
+<figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">-module</span><span class="params">(game_server)</span>.</span><br><span class="line"></span><br><span class="line"><span class="keyword">-behaviour</span><span class="params">(gen_server)</span>.</span><br><span class="line"></span><br><span class="line"><span class="keyword">-export</span><span class="params">([start_link/<span class="number">0</span>, game_count/<span class="number">0</span>])</span>.</span><br><span class="line"></span><br><span class="line"><span class="keyword">-define</span><span class="params">(GAME_MODULE, game)</span>.</span><br><span class="line"><span class="comment">%% gen_server callbacks</span></span><br><span class="line"><span class="keyword">-export</span><span class="params">([init/<span class="number">1</span>,</span></span><br><span class="line"><span class="params">         handle_call/<span class="number">3</span>,</span></span><br><span class="line"><span class="params">         handle_cast/<span class="number">2</span>,</span></span><br><span class="line"><span class="params">         handle_info/<span class="number">2</span>,</span></span><br><span class="line"><span class="params">         terminate/<span class="number">2</span>,</span></span><br><span class="line"><span class="params">         code_change/<span class="number">3</span>])</span>.</span><br><span class="line"></span><br><span class="line"><span class="keyword">-record</span><span class="params">(state, &#123;words, games = []&#125;)</span>.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">start_link</span><span class="params">()</span> -&gt;</span></span><br><span class="line">    gen_server:start_link(&#123;global, ?MODULE&#125;, ?MODULE, [], []).</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">games</span><span class="params">()</span> -&gt;</span></span><br><span class="line">    [<span class="string">&quot;adalovelace&quot;</span>, <span class="string">&quot;hello&quot;</span>, <span class="string">&quot;world&quot;</span>].</span><br><span class="line"><span class="function"><span class="title">init</span><span class="params">([])</span> -&gt;</span></span><br><span class="line">    &#123;ok, #state&#123;words = games(), games = games()&#125;&#125;.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">handle_call</span><span class="params">(start_game, _From, State = #state&#123;games = []&#125;)</span> -&gt;</span></span><br><span class="line">    &#123;reply, empty, State&#125;;</span><br><span class="line"><span class="function"><span class="title">handle_call</span><span class="params">(start_game, _From, State = #state&#123;games = [G|Gs]&#125;)</span> -&gt;</span></span><br><span class="line">    Id = length(State#state.words) - length(State#state.games),</span><br><span class="line">    Name = game_name(Id),</span><br><span class="line">    game:game(Name, G),</span><br><span class="line">    &#123;reply, &#123;ok, Name&#125;, State#state&#123;games = Gs&#125;&#125;;</span><br><span class="line"><span class="function"><span class="title">handle_call</span><span class="params">(game_left, _From, State)</span> -&gt;</span></span><br><span class="line">    &#123;reply, length(State#state.games), State&#125;;</span><br><span class="line"><span class="function"><span class="title">handle_call</span><span class="params">(_Request, _From, State)</span> -&gt;</span></span><br><span class="line">    &#123;reply, ignored, State&#125;.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">handle_cast</span><span class="params">(_Msg, State)</span> -&gt;</span></span><br><span class="line">    &#123;noreply, State&#125;.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">handle_info</span><span class="params">(_Info, State)</span> -&gt;</span></span><br><span class="line">    &#123;noreply, State&#125;.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">terminate</span><span class="params">(_Reason, _State)</span> -&gt;</span></span><br><span class="line">    ok.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">code_change</span><span class="params">(_OldVsn, State, _Extra)</span> -&gt;</span></span><br><span class="line">    &#123;ok, State&#125;.</span><br><span class="line"><span class="function"><span class="title">game_name</span><span class="params">(Id)</span> -&gt;</span></span><br><span class="line">    list_to_atom(lists:concat([<span class="string">&quot;game_&quot;</span>, Id])).</span><br><span class="line"><span class="function"><span class="title">game_count</span><span class="params">()</span> -&gt;</span></span><br><span class="line">    gen_server:call(?MODULE, game_left).</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

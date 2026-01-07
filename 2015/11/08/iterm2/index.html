@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Configuring iTerm 2"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2015/11/08/iterm2/"/>
+
+
+<meta name="description" content="Considered as the best terminal emulator on OS X platform, iTerm 2 does offer plenty of options one could tweak to achieve the fully-customized version to suit each one. I want to use cmd as meta, for">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Configuring iTerm 2">
+<meta property="og:url" content="https://albertnetymk.github.io/2015/11/08/iterm2/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Considered as the best terminal emulator on OS X platform, iTerm 2 does offer plenty of options one could tweak to achieve the fully-customized version to suit each one. I want to use cmd as meta, for">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-11-08T12:15:08.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Configuring iTerm 2 - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Configuring iTerm 2
+        
+      </h1>
+
+      <time class="post-time">
+          Nov 8 2015
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Considered as the best terminal emulator on OS X platform, iTerm 2 does offer plenty of options one could tweak to achieve the fully-customized
+version to suit each one.</p>
+<p>I want to use <code>cmd</code> as <code>meta</code>, for I work with tmux intensively, but losing <code>cmd+tab</code> is not an option. Fortunately, there’s a section titled “Swap
+Cmd and Option” in iTerm 2 <a target="_blank" rel="noopener" href="https://www.iterm2.com/documentation-one-page.html">documentation</a>. The main idea is to swap <code>cmd</code> with <code>alt</code> (aka
+option), and add one exception to bypass the remapping for <code>cmd+tab</code> key combination.</p>
+<p>Reprint the pertinent content here:</p>
+<blockquote>
+<p>Swap Cmd and Option</p>
+</blockquote>
+<blockquote>
+<p>iTerm2 allows you to remap modifiers. You have separate control over left and right command and option keys. One common need is to exchange cmd and
+option. To do this, go to Preferences &gt; Keys. Set Left option key to Left command key and Left command key to Left option key (and do the same for
+Right command and Right option if you please). You can add exceptions if you don’t want certain combinations to be remapped (for example, cmd-tab)
+by adding a new global shortcut with the action “Do Not Remap” and the keystroke of the (unremapped) key you wish to keep unaffected by modifier
+remapping.</p>
+</blockquote>
+<h2 id="Auto-start-with-specific-tabs-commands"><a class="header-anchor" href="#Auto-start-with-specific-tabs-commands">§</a>Auto start with specific tabs/commands</h2>
+<figure class="highlight applescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- waiting for network</span></span><br><span class="line"><span class="keyword">set</span> max <span class="keyword">to</span> <span class="number">10</span></span><br><span class="line"><span class="keyword">repeat</span> <span class="keyword">with</span> i <span class="keyword">from</span> <span class="number">1</span> <span class="keyword">to</span> max</span><br><span class="line">	<span class="keyword">try</span></span><br><span class="line">		<span class="built_in">do shell script</span> <span class="string">&quot;ping -o www.google.com&quot;</span></span><br><span class="line">		<span class="keyword">exit</span> <span class="keyword">repeat</span></span><br><span class="line">	<span class="keyword">on</span> <span class="keyword">error</span></span><br><span class="line">		<span class="built_in">delay</span> <span class="number">6</span></span><br><span class="line">		<span class="keyword">if</span> i = max <span class="keyword">then</span></span><br><span class="line">			<span class="built_in">display dialog</span> <span class="string">&quot;Network down.&quot;</span></span><br><span class="line">			<span class="keyword">error</span> <span class="built_in">number</span> <span class="number">-128</span></span><br><span class="line">		<span class="keyword">end</span> <span class="keyword">if</span></span><br><span class="line">	<span class="keyword">end</span> <span class="keyword">try</span></span><br><span class="line"><span class="keyword">end</span> <span class="keyword">repeat</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">tell</span> <span class="built_in">application</span> <span class="string">&quot;iTerm&quot;</span></span><br><span class="line">	quit</span><br><span class="line">	<span class="built_in">delay</span> <span class="number">0.1</span></span><br><span class="line"><span class="keyword">end</span> <span class="keyword">tell</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- switch to Desktop 2</span></span><br><span class="line"><span class="keyword">tell</span> <span class="built_in">application</span> <span class="string">&quot;System Events&quot;</span></span><br><span class="line">	<span class="built_in">do shell script</span> <span class="string">&quot;/Applications/Mission\\ Control.app/Contents/MacOS/Mission\\ Control&quot;</span></span><br><span class="line">	<span class="built_in">delay</span> <span class="number">0.5</span></span><br><span class="line">	<span class="keyword">tell</span> <span class="built_in">application</span> <span class="string">&quot;System Events&quot;</span> <span class="keyword">to</span> click (<span class="keyword">first</span> button <span class="keyword">whose</span> value <span class="keyword">of</span> attribute <span class="string">&quot;AXDescription&quot;</span> <span class="keyword">is</span> <span class="string">&quot;exit to Desktop 2&quot;</span>) <span class="keyword">of</span> <span class="built_in">list</span> <span class="number">1</span> <span class="keyword">of</span> group <span class="number">1</span> <span class="keyword">of</span> process <span class="string">&quot;Dock&quot;</span></span><br><span class="line"><span class="keyword">end</span> <span class="keyword">tell</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">tell</span> <span class="built_in">application</span> <span class="string">&quot;iTerm&quot;</span></span><br><span class="line">	<span class="built_in">activate</span></span><br><span class="line">	terminate <span class="keyword">the</span> <span class="keyword">first</span> session <span class="keyword">of</span> <span class="keyword">first</span> terminal</span><br><span class="line"></span><br><span class="line">	<span class="keyword">tell</span> i term <span class="built_in">application</span> <span class="string">&quot;System Events&quot;</span></span><br><span class="line">		keystroke <span class="literal">space</span> using option down</span><br><span class="line">	<span class="keyword">end</span> <span class="keyword">tell</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">tell</span> <span class="keyword">the</span> current terminal</span><br><span class="line">		<span class="built_in">write</span> <span class="keyword">the</span> current session <span class="built_in">text</span> <span class="string">&quot;htop&quot;</span></span><br><span class="line"></span><br><span class="line">		<span class="built_in">launch</span> session <span class="string">&quot;Guake&quot;</span></span><br><span class="line">		<span class="built_in">write</span> <span class="keyword">the</span> current session <span class="built_in">text</span> <span class="string">&quot;nettop&quot;</span></span><br><span class="line">		<span class="built_in">write</span> <span class="keyword">the</span> current session <span class="built_in">text</span> <span class="string">&quot;d&quot;</span> <span class="keyword">without</span> newline</span><br><span class="line">		<span class="built_in">write</span> <span class="keyword">the</span> current session <span class="built_in">text</span> <span class="string">&quot;c&quot;</span> <span class="keyword">without</span> newline</span><br><span class="line"></span><br><span class="line">		<span class="built_in">launch</span> session <span class="string">&quot;Guake&quot;</span></span><br><span class="line">		<span class="built_in">write</span> <span class="keyword">the</span> current session <span class="built_in">text</span> <span class="string">&quot;cd Documents&quot;</span></span><br><span class="line"></span><br><span class="line">		<span class="built_in">launch</span> session <span class="string">&quot;Guake&quot;</span></span><br><span class="line">		<span class="built_in">write</span> <span class="keyword">the</span> current session <span class="built_in">text</span> <span class="string">&quot;vm; hg pull -u&quot;</span></span><br><span class="line"></span><br><span class="line">		<span class="built_in">launch</span> session <span class="string">&quot;Guake&quot;</span></span><br><span class="line">		select <span class="keyword">first</span> session</span><br><span class="line">	<span class="keyword">end</span> <span class="keyword">tell</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">tell</span> i term <span class="built_in">application</span> <span class="string">&quot;System Events&quot;</span></span><br><span class="line">		keystroke <span class="literal">space</span> using option down</span><br><span class="line">	<span class="keyword">end</span> <span class="keyword">tell</span></span><br><span class="line"></span><br><span class="line">	<span class="built_in">delay</span> <span class="number">1</span></span><br><span class="line"></span><br><span class="line">	<span class="keyword">set</span> myterm <span class="keyword">to</span> (make new terminal)</span><br><span class="line">	<span class="keyword">tell</span> myterm</span><br><span class="line">		terminate <span class="keyword">the</span> current session</span><br><span class="line">		<span class="built_in">launch</span> session <span class="string">&quot;Default&quot;</span></span><br><span class="line">		<span class="built_in">write</span> <span class="keyword">the</span> current session <span class="built_in">text</span> <span class="string">&quot;phd&quot;</span></span><br><span class="line">		<span class="built_in">write</span> <span class="keyword">the</span> current session <span class="built_in">text</span> <span class="string">&quot;ta&quot;</span></span><br><span class="line">	<span class="keyword">end</span> <span class="keyword">tell</span></span><br><span class="line"><span class="keyword">end</span> <span class="keyword">tell</span></span><br><span class="line"></span><br><span class="line"><span class="comment">-- switch to Desktop 1</span></span><br><span class="line"><span class="keyword">tell</span> <span class="built_in">application</span> <span class="string">&quot;System Events&quot;</span></span><br><span class="line">	<span class="built_in">do shell script</span> <span class="string">&quot;/Applications/Mission\\ Control.app/Contents/MacOS/Mission\\ Control&quot;</span></span><br><span class="line">	<span class="built_in">delay</span> <span class="number">0.5</span></span><br><span class="line">	<span class="keyword">tell</span> <span class="built_in">application</span> <span class="string">&quot;System Events&quot;</span> <span class="keyword">to</span> click (<span class="keyword">first</span> button <span class="keyword">whose</span> value <span class="keyword">of</span> attribute <span class="string">&quot;AXDescription&quot;</span> <span class="keyword">is</span> <span class="string">&quot;exit to Desktop 1&quot;</span>) <span class="keyword">of</span> <span class="built_in">list</span> <span class="number">1</span> <span class="keyword">of</span> group <span class="number">1</span> <span class="keyword">of</span> process <span class="string">&quot;Dock&quot;</span></span><br><span class="line"><span class="keyword">end</span> <span class="keyword">tell</span></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>
