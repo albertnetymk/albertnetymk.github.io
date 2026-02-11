@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Wildcard Matching"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2017/12/11/wildcard/"/>
+
+
+<meta name="description" content="After solving this leetcode problem using dynamic programming, I had a look at how others solved it, and this approach caught my eyes. The C++ version is surprisingly neat, possibly due to utilizing t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Wildcard Matching">
+<meta property="og:url" content="https://albertnetymk.github.io/2017/12/11/wildcard/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="After solving this leetcode problem using dynamic programming, I had a look at how others solved it, and this approach caught my eyes. The C++ version is surprisingly neat, possibly due to utilizing t">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-12-11T01:38:22.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Wildcard Matching - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Wildcard Matching
+        
+      </h1>
+
+      <time class="post-time">
+          Dec 11 2017
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>After solving this <a target="_blank" rel="noopener" href="https://leetcode.com/problems/wildcard-matching/description/">leetcode problem</a> using dynamic programming, I had a look at how
+others solved it, and <a target="_blank" rel="noopener" href="https://discuss.leetcode.com/topic/3040/linear-runtime-and-constant-space-solution">this approach</a> caught my eyes. The C++
+version is surprisingly neat, possibly due to utilizing the fact <code>NULL</code> is at the end of the char array.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// reprinted from above link</span></span><br><span class="line"><span class="function"><span class="type">bool</span> <span class="title">isMatch</span><span class="params">(<span class="type">const</span> <span class="type">char</span> *s, <span class="type">const</span> <span class="type">char</span> *p)</span> </span>&#123;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* star=<span class="literal">NULL</span>;</span><br><span class="line">    <span class="type">const</span> <span class="type">char</span>* ss=s;</span><br><span class="line">    <span class="keyword">while</span> (*s)&#123;</span><br><span class="line">        <span class="comment">//advancing both pointers when (both characters match) or (&#x27;?&#x27; found in pattern)</span></span><br><span class="line">        <span class="comment">//note that *p will not advance beyond its length</span></span><br><span class="line">        <span class="keyword">if</span> ((*p==<span class="string">&#x27;?&#x27;</span>)||(*p==*s))&#123;s++;p++;<span class="keyword">continue</span>;&#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// * found in pattern, track index of *, only advancing pattern pointer</span></span><br><span class="line">        <span class="keyword">if</span> (*p==<span class="string">&#x27;*&#x27;</span>)&#123;star=p++; ss=s;<span class="keyword">continue</span>;&#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">//current characters didn&#x27;t match, last pattern pointer was *, current pattern pointer is not *</span></span><br><span class="line">        <span class="comment">//only advancing pattern pointer</span></span><br><span class="line">        <span class="keyword">if</span> (star)&#123; p = star+<span class="number">1</span>; s=++ss;<span class="keyword">continue</span>;&#125;</span><br><span class="line"></span><br><span class="line">       <span class="comment">//current pattern pointer is not star, last patter pointer was not *</span></span><br><span class="line">       <span class="comment">//characters do not match</span></span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">//check for remaining characters in pattern</span></span><br><span class="line">    <span class="keyword">while</span> (*p==<span class="string">&#x27;*&#x27;</span>)&#123;p++;&#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> !*p;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The gist of the algorithm is to match empty string with <code>*</code> firstly, and backtrack so that <code>*</code> match one more char every time the matching fails later
+on, basically depth-first search if we see how state graph is traversed.</p>
+<p>Since I don’t know much about C++, I tried to re-implement it in Java, here is what ended up with. I had to say this Java code is rather ugly, for the
+program is littered with arbitrary <code>+1</code>, which makes it hard to assess whether the program is correct or not.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">isMatch</span><span class="params">(String str, String pattern)</span> &#123;</span><br><span class="line">  <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">  <span class="type">int</span> <span class="variable">j</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> <span class="variable">bt_i</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">  <span class="type">int</span> <span class="variable">bt_j</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> <span class="variable">m</span> <span class="operator">=</span> str.length();</span><br><span class="line">  <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> pattern.length();</span><br><span class="line">  <span class="keyword">while</span> (i &lt; m) &#123;</span><br><span class="line">    <span class="type">char</span> <span class="variable">s</span> <span class="operator">=</span> str.charAt(i);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (j &lt; n) &#123;</span><br><span class="line">      <span class="type">char</span> <span class="variable">p</span> <span class="operator">=</span> pattern.charAt(j);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (p == <span class="string">&#x27;*&#x27;</span>) &#123;</span><br><span class="line">        <span class="comment">// match empty string, but leave backtrack here</span></span><br><span class="line">        <span class="comment">// potentially overwrite previous star, but it&#x27;s fine</span></span><br><span class="line">        bt_i = i + <span class="number">1</span>;</span><br><span class="line">        bt_j = j + <span class="number">1</span>;</span><br><span class="line">        j++;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (s == p || p == <span class="string">&#x27;?&#x27;</span>) &#123;</span><br><span class="line">        i++;</span><br><span class="line">        j++;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (bt_i != <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="comment">// backtrack to previous star</span></span><br><span class="line">      i = bt_i;</span><br><span class="line">      j = bt_j;</span><br><span class="line"></span><br><span class="line">      bt_i++;</span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (j &lt; n) &#123;</span><br><span class="line">    <span class="keyword">if</span> (pattern.charAt(j) != <span class="string">&#x27;*&#x27;</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    j++;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Considering that Haskell is another programming language I can write helloworld in, I rewrote (sort of) the same logic in it, but the result was truly
+astonishing.</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="title">is_match</span> :: <span class="type">String</span> -&gt; <span class="type">String</span> -&gt; <span class="type">Bool</span></span><br><span class="line"><span class="title">is_match</span> str@(s:ss) pattern@(p:ps)</span><br><span class="line">  | p == &#x27;*&#x27; = is_match str ps || is_match ss pattern</span><br><span class="line">  | s == p || p == &#x27;?&#x27; = is_match ss ps</span><br><span class="line">  | otherwise = <span class="type">False</span></span><br><span class="line"><span class="title">is_match</span> [] pattern = all (==&#x27;*&#x27;) pattern</span><br><span class="line"><span class="title">is_match</span> (s:ss) [] = <span class="type">False</span></span><br></pre></td></tr></table></figure>
+<p>Amazed by the resulting Haskell program, I started to ponder on this transcending difference. In the process, I realized that the two versions are
+actually not equivalent. If we draw the state graph, we could see that the two versions don’t cover the same state graph. In order to make the two
+programs the same, I had to change the Java program to the following. (Modification is marked with <code>DELTA</code>.)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="type">boolean</span> <span class="title function_">isMatch</span><span class="params">(String str, String pattern)</span> &#123;</span><br><span class="line">  <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">  <span class="type">int</span> <span class="variable">j</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> <span class="variable">bt_i</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">  <span class="type">int</span> <span class="variable">bt_j</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">int</span> <span class="variable">m</span> <span class="operator">=</span> str.length();</span><br><span class="line">  <span class="type">int</span> <span class="variable">n</span> <span class="operator">=</span> pattern.length();</span><br><span class="line">  <span class="keyword">while</span> (i &lt; m) &#123;</span><br><span class="line">    <span class="type">char</span> <span class="variable">s</span> <span class="operator">=</span> str.charAt(i);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (j &lt; n) &#123;</span><br><span class="line">      <span class="type">char</span> <span class="variable">p</span> <span class="operator">=</span> pattern.charAt(j);</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (p == <span class="string">&#x27;*&#x27;</span>) &#123;</span><br><span class="line">        <span class="comment">// match empty string, but leave backtrack here</span></span><br><span class="line">        <span class="comment">// potentially overwrite previous star, but it&#x27;s fine</span></span><br><span class="line">        bt_i = i + <span class="number">1</span>;</span><br><span class="line">        bt_j = j; <span class="comment">// DELTA</span></span><br><span class="line">        j++;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">if</span> (s == p || p == <span class="string">&#x27;?&#x27;</span>) &#123;</span><br><span class="line">        i++;</span><br><span class="line">        j++;</span><br><span class="line">        <span class="keyword">continue</span>;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (bt_i != <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="comment">// backtrack to previous star</span></span><br><span class="line">      i = bt_i;</span><br><span class="line">      j = bt_j;</span><br><span class="line"></span><br><span class="line">      bt_i = <span class="number">0</span>; <span class="comment">// DELTA</span></span><br><span class="line">      <span class="keyword">continue</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (j &lt; n) &#123;</span><br><span class="line">    <span class="keyword">if</span> (pattern.charAt(j) != <span class="string">&#x27;*&#x27;</span>) &#123;</span><br><span class="line">      <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    j++;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The modified Java program visited more states, so does the Haskell version, compared with my original Java program. The complexity of three
+implementations is all <code>length(str) * length(pattern)</code>, but with different constant factor. On the other hand, the Haskell version is too abstract to
+reveal any of this low level details. Therefore, the conclusion of this small adventure is rather mundane, abstraction and optimization are often
+conflicting with each other.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

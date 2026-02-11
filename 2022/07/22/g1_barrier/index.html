@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="G1 Pre-Barrier Implementation"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2022/07/22/g1_barrier/"/>
+
+
+<meta name="description" content="G1 uses two kinds of barriers to maintain certain GC invariants, while mutators update the objects graph concurrently.   The pre-barrier is some code mutators execute before a store operation, and it">
+<meta property="og:type" content="article">
+<meta property="og:title" content="G1 Pre-Barrier Implementation">
+<meta property="og:url" content="https://albertnetymk.github.io/2022/07/22/g1_barrier/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="G1 uses two kinds of barriers to maintain certain GC invariants, while mutators update the objects graph concurrently.   The pre-barrier is some code mutators execute before a store operation, and it">
+<meta property="og:locale">
+<meta property="article:published_time" content="2022-07-22T21:08:58.000Z">
+<meta property="article:modified_time" content="2022-09-01T22:30:10.044Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> G1 Pre-Barrier Implementation - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          G1 Pre-Barrier Implementation
+        
+      </h1>
+
+      <time class="post-time">
+          Jul 22 2022
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>G1 uses two kinds of barriers to maintain certain GC invariants, while mutators update the objects graph concurrently.</p>
+<ol>
+<li>
+<p>The pre-barrier is some code mutators execute <em>before</em> a store operation, and it is used to maintain the
+Snapshot-At-The-Beginning (SATB) invariant, i.e. all objects reachable at the marking-start will be marked in this
+marking cycle.</p>
+</li>
+<li>
+<p>The post-barrier is some code mutators execute <em>after</em> a store operation, and it is used to maintain the
+cross-generation invariant, i.e. all pointers from old-gen to young-gen must be identified in some way.</p>
+</li>
+</ol>
+<p>In this post, we will focus on the pre-barrier and see its implementation in OpenJDK. (These two kinds of barriers are
+usually next to each other in the codebase, so one can easily do the same for the post-barrier after going through this
+post.)</p>
+<h2 id="Overview"><a class="header-anchor" href="#Overview">§</a>Overview</h2>
+<p>The essence of pre-barrier logic is:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (is_marking_active) &#123;</span><br><span class="line">  <span class="keyword">if</span> (pre_val != null) &#123;</span><br><span class="line">    enqueue(pre_val);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The <code>pre_val</code> is the previous value that is about to be overwritten by a store operation, e.g. in the case of <code>o.field = new_obj</code>, <code>pre_val</code> would hold the value in <code>o.field</code> before the assignment. The barrier code consists of two checks and
+a function call to record the previous value.</p>
+<p>Next we will use a trivial java program to help us study how this barrier logic is implemented in the interpreter and
+JIT compilers.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">hello</span> &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">A</span> &#123;</span><br><span class="line">        <span class="keyword">public</span> A x;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">f</span><span class="params">(A a)</span> &#123;</span><br><span class="line">        a.x = <span class="keyword">new</span> <span class="title class_">A</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">        <span class="type">var</span> <span class="variable">a</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">A</span>();</span><br><span class="line">        f(a);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The interesting part is the <code>f</code> method, which contains a store operation overwriting a field (<code>a.x</code>) — this triggers
+the pre-barrier. The following command prints all relevant assembly for the interpreter, JIT compilers, and the stub
+code.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">java \</span></span><br><span class="line"><span class="language-bash">    -Xcomp \</span></span><br><span class="line"><span class="language-bash">    -XX:TieredStopAtLevel=4 \</span></span><br><span class="line"><span class="language-bash">    -XX:+UnlockDiagnosticVMOptions \</span></span><br><span class="line"><span class="language-bash">    -XX:PrintAssemblyOptions=intel \</span></span><br><span class="line"><span class="language-bash">    -XX:+PrintInterpreter \</span></span><br><span class="line"><span class="language-bash">    -XX:CompileCommand=<span class="string">&#x27;CompileOnly,*hello.f&#x27;</span> \</span></span><br><span class="line"><span class="language-bash">    -XX:CompileCommand=<span class="string">&#x27;DontInline,*hello.f&#x27;</span> \</span></span><br><span class="line"><span class="language-bash">    -XX:CompileCommand=<span class="string">&#x27;PrintAssembly,*hello.f&#x27;</span> \</span></span><br><span class="line"><span class="language-bash">    -XX:+PrintStubCode \</span></span><br><span class="line"><span class="language-bash">    -XX:-UseCompressedOops \</span></span><br><span class="line"><span class="language-bash">    hello.java</span></span><br></pre></td></tr></table></figure>
+<h2 id="Template-Interpreter"><a class="header-anchor" href="#Template-Interpreter">§</a>Template Interpreter</h2>
+<p>The bytecode corresponding to “store operation” is <code>putfield</code>, so the top-level caller is <code>TemplateTable::putfield</code>,
+which eventually calls <code>G1BarrierSetAssembler::g1_write_barrier_pre</code>, and the generated assembly looks like:</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">putfield  <span class="number">181</span> putfield  [<span class="number">0x00007fbde0567500</span>, <span class="number">0x00007fbde0568470</span>]  <span class="number">3952</span> bytes</span><br><span class="line">  ...</span><br><span class="line">  <span class="number">0x00007fbde056777e</span>:   <span class="keyword">cmp</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x40</span>],<span class="number">0x0</span>          &lt;--- (<span class="number">1</span>) is_marking_active</span><br><span class="line">  <span class="number">0x00007fbde0567783</span>:   <span class="keyword">je</span>     <span class="number">0x00007fbde0567966</span></span><br><span class="line">  <span class="number">0x00007fbde0567789</span>:   <span class="keyword">mov</span>    <span class="built_in">rbx</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rdx</span>]</span><br><span class="line">  <span class="number">0x00007fbde056778c</span>:   <span class="keyword">cmp</span>    <span class="built_in">rbx</span>,<span class="number">0x0</span>                          &lt;--- (<span class="number">2</span>) pre_val is null <span class="keyword">or</span> <span class="keyword">not</span></span><br><span class="line">  <span class="number">0x00007fbde0567790</span>:   <span class="keyword">je</span>     <span class="number">0x00007fbde0567966</span></span><br><span class="line">  <span class="number">0x00007fbde0567796</span>:   <span class="keyword">mov</span>    <span class="built_in">r8</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x28</span>]</span><br><span class="line">  <span class="number">0x00007fbde056779a</span>:   <span class="keyword">cmp</span>    <span class="built_in">r8</span>,<span class="number">0x0</span>                           &lt;--- (<span class="number">3</span>) thread-local buffer has free slots <span class="keyword">or</span> <span class="keyword">not</span></span><br><span class="line">  <span class="number">0x00007fbde056779e</span>:   <span class="keyword">je</span>     <span class="number">0x00007fbde05677b8</span></span><br><span class="line">  <span class="number">0x00007fbde05677a4</span>:   <span class="keyword">sub</span>    <span class="built_in">r8</span>,<span class="number">0x8</span></span><br><span class="line">  <span class="number">0x00007fbde05677a8</span>:   <span class="keyword">mov</span>    <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x28</span>],<span class="built_in">r8</span></span><br><span class="line">  <span class="number">0x00007fbde05677ac</span>:   <span class="keyword">add</span>    <span class="built_in">r8</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x38</span>]</span><br><span class="line">  <span class="number">0x00007fbde05677b0</span>:   <span class="keyword">mov</span>    <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r8</span>],<span class="built_in">rbx</span></span><br><span class="line">  <span class="number">0x00007fbde05677b3</span>:   <span class="keyword">jmp</span>    <span class="number">0x00007fbde0567966</span></span><br><span class="line">  ...</span><br><span class="line">  <span class="number">0x00007fbde056789f</span>:   <span class="keyword">call</span>   <span class="number">0x00007fbdef7699d0</span>               &lt;--- (<span class="number">4</span>) <span class="keyword">call</span> G1BarrierSetRuntime::write_ref_field_pre_entry</span><br></pre></td></tr></table></figure>
+<p>Instructions annotated with (1) and (2) are the two aforementioned <code>if</code> checks. The code corresponding to (3), handling
+buffers being full, is inside <code>enqueue</code>, which is (4), i.e. <code>G1BarrierSetRuntime::write_ref_field_pre_entry</code>.</p>
+<h2 id="C1-Compiler"><a class="header-anchor" href="#C1-Compiler">§</a>C1 Compiler</h2>
+<p>The relevant methods are:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">G1BarrierSetC1::pre_barrier</span><br><span class="line"> -&gt; G1BarrierSetAssembler::gen_pre_barrier_stub</span><br><span class="line">   -&gt; G1BarrierSetAssembler::generate_c1_pre_barrier_runtime_stub</span><br></pre></td></tr></table></figure>
+<p>and the generated assembly looks like:</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">============================= C1-compiled nmethod ==============================</span><br><span class="line">----------------------------------- Assembly -----------------------------------</span><br><span class="line"></span><br><span class="line">Compiled method (c1)    <span class="number">9758</span>   <span class="number">81</span>       <span class="number">3</span>       hello::f (<span class="number">12</span> bytes)</span><br><span class="line">...</span><br><span class="line">[Disassembly]</span><br><span class="line"></span><br><span class="line">  ...</span><br><span class="line"></span><br><span class="line">  <span class="number">0x00007fbdd90002ea</span>:   <span class="keyword">movsx</span>  <span class="built_in">esi</span>,<span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x40</span>]</span><br><span class="line">  <span class="number">0x00007fbdd90002ef</span>:   <span class="keyword">cmp</span>    <span class="built_in">esi</span>,<span class="number">0x0</span>                     &lt;--- (<span class="number">1</span>)</span><br><span class="line">  <span class="number">0x00007fbdd90002f2</span>:   <span class="keyword">jne</span>    <span class="number">0x00007fbdd9000393</span></span><br><span class="line">  ...</span><br><span class="line"> <span class="comment">;; G1PreBarrierStub slow case</span></span><br><span class="line">  <span class="number">0x00007fbdd9000393</span>:   <span class="keyword">mov</span>    <span class="built_in">rsi</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rbx</span>+<span class="number">0x10</span>]</span><br><span class="line">  <span class="number">0x00007fbdd9000397</span>:   <span class="keyword">cmp</span>    <span class="built_in">rsi</span>,<span class="number">0x0</span>                     &lt;--- (<span class="number">2</span>)</span><br><span class="line">  <span class="number">0x00007fbdd900039b</span>:   <span class="keyword">je</span>     <span class="number">0x00007fbdd90002f8</span></span><br><span class="line">  <span class="number">0x00007fbdd90003a1</span>:   <span class="keyword">mov</span>    <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rsp</span>],<span class="built_in">rsi</span></span><br><span class="line">  <span class="number">0x00007fbdd90003a5</span>:   <span class="keyword">call</span>   <span class="number">0x00007fbde05beca0</span>           <span class="comment">;   &#123;runtime_call g1_pre_barrier_slow&#125;</span></span><br><span class="line">  <span class="number">0x00007fbdd90003aa</span>:   <span class="keyword">jmp</span>    <span class="number">0x00007fbdd90002f8</span></span><br><span class="line">  ...</span><br><span class="line">[/Disassembly]</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">- - - [BEGIN] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br><span class="line">Decoding RuntimeStub - g1_pre_barrier_slow <span class="number">0x00007fbde05bec10</span></span><br><span class="line">--------------------------------------------------------------------------------</span><br><span class="line">  <span class="number">0x00007fbde05beca0</span>:   <span class="keyword">push</span>   <span class="built_in">rbp</span></span><br><span class="line">  ...</span><br><span class="line">  <span class="number">0x00007fbde05beca6</span>:   <span class="keyword">mov</span>    <span class="built_in">rdx</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x28</span>]</span><br><span class="line">  <span class="number">0x00007fbde05becaa</span>:   <span class="keyword">test</span>   <span class="built_in">rdx</span>,<span class="built_in">rdx</span>                     &lt;--- (<span class="number">3</span>)</span><br><span class="line">  <span class="number">0x00007fbde05becad</span>:   <span class="keyword">je</span>     <span class="number">0x00007fb2ac6fe24b</span></span><br><span class="line">  <span class="number">0x00007fbde05becb3</span>:   <span class="keyword">sub</span>    <span class="built_in">rdx</span>,<span class="number">0x8</span></span><br><span class="line">  <span class="number">0x00007fbde05becb7</span>:   <span class="keyword">mov</span>    <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x28</span>],<span class="built_in">rdx</span></span><br><span class="line">  <span class="number">0x00007fbde05becbb</span>:   <span class="keyword">add</span>    <span class="built_in">rdx</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x38</span>]</span><br><span class="line">  <span class="number">0x00007fbde05becbf</span>:   <span class="keyword">mov</span>    <span class="built_in">rax</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rbp</span>+<span class="number">0x10</span>]</span><br><span class="line">  <span class="number">0x00007fbde05becc3</span>:   <span class="keyword">mov</span>    <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rdx</span>],<span class="built_in">rax</span></span><br><span class="line">  <span class="number">0x00007fbde05becc6</span>:   <span class="keyword">jmp</span>    <span class="number">0x00007fb2ac6fe3db</span></span><br><span class="line">  ...</span><br><span class="line">  <span class="number">0x00007fbde05bed94</span>:   <span class="keyword">call</span>   <span class="number">0x00007fbdef7699d0</span>          &lt;--- (<span class="number">4</span>)</span><br><span class="line">--------------------------------------------------------------------------------</span><br><span class="line">- - - [END] - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</span><br></pre></td></tr></table></figure>
+<p>Note that (3) and (4) are <em>not</em> “inlined” in the assembly of <code>hello.f</code>; instead, they live in a <code>RuntimeStub</code>, which
+means another method (other than <code>hello.f</code>) can call this stub as well. This decreases the overall C1 assembly
+footprint, with a slight cost of reduced throughput.</p>
+<h2 id="C2-Compiler"><a class="header-anchor" href="#C2-Compiler">§</a>C2 Compiler</h2>
+<p>The implementation is in <code>G1BarrierSetC2::pre_barrier</code> and the generated assembly looks like:</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">--------------------------------------------------------------------------------</span><br><span class="line">----------------------------------- Assembly -----------------------------------</span><br><span class="line"></span><br><span class="line">Compiled method (c2)    <span class="number">9517</span>   <span class="number">82</span>       <span class="number">4</span>       hello::f (<span class="number">12</span> bytes)</span><br><span class="line"></span><br><span class="line">...</span><br><span class="line">[Disassembly]</span><br><span class="line">...</span><br><span class="line"></span><br><span class="line">  <span class="number">0x00007fbde0ad96a9</span>:   <span class="keyword">cmp</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x40</span>],<span class="number">0x0</span>      &lt;--- (<span class="number">1</span>)</span><br><span class="line">  <span class="number">0x00007fbde0ad96ae</span>:   <span class="keyword">jne</span>    <span class="number">0x00007fbde0ad96ef</span></span><br><span class="line">  ...</span><br><span class="line">  <span class="number">0x00007fbde0ad96ef</span>:   <span class="keyword">mov</span>    <span class="built_in">rdi</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rbp</span>+<span class="number">0x10</span>]</span><br><span class="line">  <span class="number">0x00007fbde0ad96f3</span>:   <span class="keyword">test</span>   <span class="built_in">rdi</span>,<span class="built_in">rdi</span>                      &lt;--- (<span class="number">2</span>)</span><br><span class="line">  <span class="number">0x00007fbde0ad96f6</span>:   <span class="keyword">je</span>     <span class="number">0x00007fbde0ad96b0</span></span><br><span class="line">  <span class="number">0x00007fbde0ad96f8</span>:   <span class="keyword">mov</span>    <span class="built_in">r10</span>,<span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r15</span>+<span class="number">0x28</span>]</span><br><span class="line">  ...</span><br><span class="line">  <span class="number">0x00007fbde0ad9700</span>:   <span class="keyword">test</span>   <span class="built_in">r10</span>,<span class="built_in">r10</span>                      &lt;--- (<span class="number">3</span>)</span><br><span class="line">  <span class="number">0x00007fbde0ad9703</span>:   <span class="keyword">je</span>     <span class="number">0x00007fbde0ad97a0</span></span><br><span class="line">  ...</span><br><span class="line">  <span class="number">0x00007fbde0ad97a0</span>:   <span class="keyword">mov</span>    <span class="built_in">rsi</span>,<span class="built_in">r15</span></span><br><span class="line">  <span class="number">0x00007fbde0ad97a3</span>:   movabs <span class="built_in">r10</span>,<span class="number">0x7fbdef7699d0</span>           &lt;--- (<span class="number">4</span>)</span><br><span class="line">  <span class="number">0x00007fbde0ad97ad</span>:   <span class="keyword">call</span>   <span class="built_in">r10</span></span><br><span class="line">[/Disassembly]</span><br></pre></td></tr></table></figure>
+<p>The structure is the same as the interpreter case.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

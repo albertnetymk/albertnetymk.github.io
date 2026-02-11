@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Jam Coins"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2016/06/26/jamcoin/"/>
+
+
+<meta name="description" content="The jam coin problem, the third one in google code jam 2016 qualification round, is more interesting than it appears to be. For most people, the most intuitive way to solve this problem would be enume">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Jam Coins">
+<meta property="og:url" content="https://albertnetymk.github.io/2016/06/26/jamcoin/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="The jam coin problem, the third one in google code jam 2016 qualification round, is more interesting than it appears to be. For most people, the most intuitive way to solve this problem would be enume">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-06-26T19:52:37.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.939Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Jam Coins - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Jam Coins
+        
+      </h1>
+
+      <time class="post-time">
+          Jun 26 2016
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>The jam coin problem, the third one in google code jam 2016 qualification round, is more interesting than it appears to be.</p>
+<p>For most people, the most intuitive way to solve this problem would be enumerate all potential jam coin numbers, and filter out those that matches the
+predicates related to various bases. In fact, that’s exactly what I did, and that’s only enough for the small input cases. For large input cases, the
+prime testing for large numbers could be rather expensive.</p>
+<p>Later on I realized that it’s not necessary to find all valid jam coin numbers; 50 for small input and 500 for large input would be enough. In other
+words, the solution don’t need to be complete (it’s OK to have false negative), but it has to be sound (it’s NOT OK to have false positive).
+Therefore, I could do the prime testing a bit leniently; pessimistically stating a number is prime once the test factor goes above <code>1000</code>. This way, I
+may skipped some valid jam coin numbers, but I can still find enough to pass the test.</p>
+<p>On reflection, I assumed that the message from this problem is to be aware the high cost of prime testing for large numbers, and probability
+programming could be useful if the result don’t need to be 100% correct.</p>
+<p>However, after reading the analysis from google, I discover that there’s a whole new level beside the aforementioned, and that’s why this post is
+written down. Readers are recommended to read the original <a target="_blank" rel="noopener" href="https://code.google.com/codejam/contest/6254486/dashboard#s=a&amp;a=2">analysis from google</a>,
+but I would paraphrase the gist so that readers can keep the flow of reading this post.</p>
+<p>One expected way of solving the large input case is to study the jam coin numbers we found in the small input case, and find the pattern(s).</p>
+<p>Among 50 jam coin numbers, 11 of them have the following factors:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">base:   2 3 4 5 6 7 8 9 10</span><br><span class="line">factor: 3 2 5 2 7 2 3 2 11</span><br></pre></td></tr></table></figure>
+<p>Hinted by <code>5 7 11</code>, one could conclude that those jam coin numbers have the smallest factor of <code>b+1</code> for base <code>b</code>, and <code>b+1</code> in base <code>b</code> is written as
+<code>11</code>. Therefore, those numbers could be divided by <code>11</code> for any base, and numbers matching <code>11(0|11)*11</code> is divisible by <code>11</code> for any base. In order
+to make the matching easier, we could predetermine how many pairs of <code>11</code> we would like to put into the number. The lower bound needs to be <code>2</code>,
+because of the first and last digit constraint. Then, given <code>N = 16 or 32</code>, what’s the number of jam coin numbers matching <code>11(0|11)*11</code> with <code>p</code>
+pairs of <code>11</code>?</p>
+<p>Take <code>11 &#123;&#125; 11 &#123;&#125; 11</code> with <code>N=16</code> as an example, and we need to place <code>10</code> zeros into 2 slots. This is actually classical
+putting-N-unlabelled-balls-into-M-labelled-boxes combinational problem in mathematics, and it’s often solved using <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Stars_and_bars_%28combinatorics%29">Stars and
+bars</a>. The total number of choices is <code>11</code>.</p>
+<p>More generally, for <code>N=16</code>,</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">for p = [2:5]</span><br><span class="line">    nchoosek(16 - p - 2 , 16 - p*2)</span><br><span class="line">end</span><br><span class="line">ans =  1</span><br><span class="line">ans =  11</span><br><span class="line">ans =  45</span><br><span class="line">ans =  84</span><br></pre></td></tr></table></figure>
+<p>, and for <code>N=32</code>,</p>
+<figure class="highlight plaintext"><figcaption><span>p </span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">    nchoosek(32 - p - 2 , 32 - p*2)</span><br><span class="line">end</span><br><span class="line">ans =  1</span><br><span class="line">ans =  27</span><br><span class="line">ans =  325</span><br><span class="line">ans =  2300</span><br></pre></td></tr></table></figure>
+<p>Therefore, <code>5</code> is the smallest pairs of <code>11</code> we need to have in jam coin number in order to pass both small and large input case, which is why <code>11 &#123;&#125; 11 &#123;&#125; 11 &#123;&#125; 11 &#123;&#125; 11</code> is used in the python sample code from google.</p>
+<p>In the analysis, the other factors sequence is left as an exercise, and here’s my attempt:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">base:   2 3 4 5 6 7 8 9 10</span><br><span class="line">factor: 3 2 3 2 7 2 3 2 3</span><br></pre></td></tr></table></figure>
+<p>I need to use those two theorems from <a target="_blank" rel="noopener" href="https://teresamccullough.wordpress.com/2011/05/25/divisibility-rules-for-numbers-in-bases-other-than-ten/">https://teresamccullough.wordpress.com/2011/05/25/divisibility-rules-for-numbers-in-bases-other-than-ten/</a></p>
+<blockquote>
+<p>In base N, if the sum of the digits is divisible by a factor of N — 1, the number is divisible by that factor.</p>
+</blockquote>
+<blockquote>
+<p>In base N, if alternate digits are added and subtracted, the divisibility of the result is the same as the divisibility of factors of N + 1.</p>
+</blockquote>
+<p>For base 4 and 10, I apply the first theorem, and the rest digits are applied with the latter theorem. Then, the number of <code>1</code>s is divisible by <code>3</code>,
+and it’s even number. Therefore, the jam coin number following this pattern should have six or multiple of six of <code>1</code>, and half of them on odd index
+and half on even index.</p>
+<p>Let’s calculate how many jam coin numbers there are following this pattern:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(nchoosek((16 - 2)/2, 2))^2 =&gt; ans =  441</span><br><span class="line">(nchoosek((32 - 2)/2, 2))^2 =&gt; ans =  11025</span><br></pre></td></tr></table></figure>
+<p>Good, it means that having six of <code>1</code> in our jam coin numbers is enough for both cases; otherwise, we need to try twelve of <code>1</code>.</p>
+<p>The complete code, implementing lenient prime testing, the first pattern, and the second pattern, is available
+<a target="_blank" rel="noopener" href="https://bitbucket.org/albertnetymk/codejam/src/master/2016/qualification/coin.hs">here</a>.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="JVM Startup Call Graph"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2025/11/09/jvm_startup/"/>
+
+
+<meta name="description" content="Call graph for some key methods in JVM startup: 12345678910111213141516171819202122232425262728main()  [src&#x2F;java.base&#x2F;share&#x2F;native&#x2F;launcher&#x2F;main.c]  │  └─▶ JLI_Launch()  [src&#x2F;java.base&#x2F;share&#x2F;native&#x2F;li">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM Startup Call Graph">
+<meta property="og:url" content="https://albertnetymk.github.io/2025/11/09/jvm_startup/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Call graph for some key methods in JVM startup: 12345678910111213141516171819202122232425262728main()  [src&#x2F;java.base&#x2F;share&#x2F;native&#x2F;launcher&#x2F;main.c]  │  └─▶ JLI_Launch()  [src&#x2F;java.base&#x2F;share&#x2F;native&#x2F;li">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-11-09T13:20:50.000Z">
+<meta property="article:modified_time" content="2025-11-14T19:43:53.130Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> JVM Startup Call Graph - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          JVM Startup Call Graph
+        
+      </h1>
+
+      <time class="post-time">
+          Nov 9 2025
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Call graph for some key methods in JVM startup:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">main()  [src/java.base/share/native/launcher/main.c]</span><br><span class="line">  │</span><br><span class="line">  └─▶ JLI_Launch()  [src/java.base/share/native/libjli/java.c]</span><br><span class="line">        │</span><br><span class="line">        ├─▶ LoadJavaVM(jvmpath, &amp;ifn)          // dlopen libjvm; bind JNI functions</span><br><span class="line">        │</span><br><span class="line">        ├─▶ ParseArguments()                   // Parse args; populate options[]</span><br><span class="line">        │</span><br><span class="line">        └─▶ JVMInit(&amp;ifn, ...)                 // [src/java.base/unix/native/libjli/java_md.c]</span><br><span class="line">               │</span><br><span class="line">               └─▶ ContinueInNewThread()</span><br><span class="line">                      │</span><br><span class="line">                      └─▶ CallJavaMainInNewThread()   // Create thread for JavaMain</span><br><span class="line">                             │</span><br><span class="line">                             └─▶ JavaMain(void* _args)   [src/java.base/share/native/libjli/java.c]</span><br><span class="line">                                    │</span><br><span class="line">                                    ├─▶ InitializeJVM()      // Calls ifn-&gt;CreateJavaVM</span><br><span class="line">                                    │      │</span><br><span class="line">                                    │      └─▶ Threads::create_vm()   [src/hotspot/share/runtime/threads.cpp]</span><br><span class="line">                                    │             ├─▶ init_globals()    // JIT, GC, modules, CDS</span><br><span class="line">                                    │             └─▶ VMThread::create()</span><br><span class="line">                                    │</span><br><span class="line">                                    ├─▶ LoadMainClass()</span><br><span class="line">                                    │</span><br><span class="line">                                    │</span><br><span class="line">                                    └─▶ invokeStaticMainWithArgs()</span><br><span class="line">                                           │</span><br><span class="line">                                           └─▶ (*env)-&gt;CallStaticVoidMethod</span><br></pre></td></tr></table></figure>
+<p>Files involved:</p>
+<ul>
+<li>
+<p><strong>src/java.base/share/native/launcher/main.c</strong></p>
+<p>The entry point of the launcher. As the filename suggests, this contains the <code>main</code> function.</p>
+</li>
+<li>
+<p><strong>src/java.base/share/native/libjli/java.c</strong></p>
+<p>The platform-independent portion of the JVM startup sequence. This orchestrates argument parsing, VM initialization,
+and eventually calling into Java.</p>
+</li>
+<li>
+<p><strong>src/java.base/unix/native/libjli/java_md.c</strong></p>
+<p>The platform-specific layer supporting <code>java.c</code>. It implements OS-dependent functionality such as thread creation and
+process setup on Unix-like systems.</p>
+</li>
+<li>
+<p><strong>src/hotspot/share/runtime/threads.cpp</strong></p>
+<p>The VM-internal logic for creating and managing various JVM threads, including the JIT compiler threads, GC threads,
+and the VM thread itself.</p>
+</li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

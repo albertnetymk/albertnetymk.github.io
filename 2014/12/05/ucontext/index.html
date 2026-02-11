@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Adventure with ucontext on Linux and Mac"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2014/12/05/ucontext/"/>
+
+
+<meta name="description" content="Having been playing with ucontext lately, and I would like share my experience on it. The spec I have for it is the one from open group, makecontext, and the Linux manual page, setcontext, which proba">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Adventure with ucontext on Linux and Mac">
+<meta property="og:url" content="https://albertnetymk.github.io/2014/12/05/ucontext/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Having been playing with ucontext lately, and I would like share my experience on it. The spec I have for it is the one from open group, makecontext, and the Linux manual page, setcontext, which proba">
+<meta property="og:locale">
+<meta property="article:published_time" content="2014-12-05T10:48:54.000Z">
+<meta property="article:modified_time" content="2022-12-26T15:37:22.283Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Adventure with ucontext on Linux and Mac - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Adventure with ucontext on Linux and Mac
+        
+      </h1>
+
+      <time class="post-time">
+          Dec 5 2014
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Having been playing with <code>ucontext</code> lately, and I would like share my experience
+on it. The spec I have for it is the one from open group,
+<a target="_blank" rel="noopener" href="http://pubs.opengroup.org/onlinepubs/009695399/functions/makecontext.html">makecontext</a>,
+and the Linux manual page, <a target="_blank" rel="noopener" href="http://linux.die.net/man/2/setcontext">setcontext</a>,
+which probably doesn’t apply for Mac.</p>
+<h2 id="Minimal-stack-size"><a class="header-anchor" href="#Minimal-stack-size">§</a>Minimal stack size</h2>
+<p>Firstly, let try the example from open group. The relevant change I did is to replace the stack size with one macro so
+that we don’t need to change two places if we want a different stack size.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">f1</span> <span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;start f1&quot;</span>);</span><br><span class="line">    swapcontext(&amp;ctx[<span class="number">1</span>], &amp;ctx[<span class="number">2</span>]);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;finish f1&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">f2</span> <span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;start f2&quot;</span>);</span><br><span class="line">    swapcontext(&amp;ctx[<span class="number">2</span>], &amp;ctx[<span class="number">1</span>]);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;finish f2&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">test_f1f2_main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> st1[SSIZE];</span><br><span class="line">    <span class="type">char</span> st2[SSIZE];</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%p\n&quot;</span>, &amp;st1);</span><br><span class="line">    getcontext(&amp;ctx[<span class="number">1</span>]);</span><br><span class="line">    ctx[<span class="number">1</span>].uc_stack.ss_sp = st1;</span><br><span class="line">    ctx[<span class="number">1</span>].uc_stack.ss_size = <span class="keyword">sizeof</span> st1;</span><br><span class="line">    ctx[<span class="number">1</span>].uc_link = &amp;ctx[<span class="number">0</span>];</span><br><span class="line">    makecontext(&amp;ctx[<span class="number">1</span>], f1, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    getcontext(&amp;ctx[<span class="number">2</span>]);</span><br><span class="line">    ctx[<span class="number">2</span>].uc_stack.ss_sp = st2;</span><br><span class="line">    ctx[<span class="number">2</span>].uc_stack.ss_size = <span class="keyword">sizeof</span> st2;</span><br><span class="line">    ctx[<span class="number">2</span>].uc_link = &amp;ctx[<span class="number">1</span>];</span><br><span class="line">    makecontext(&amp;ctx[<span class="number">2</span>], f2, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    swapcontext(&amp;ctx[<span class="number">0</span>], &amp;ctx[<span class="number">2</span>]);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>After reasoning, we expect the output to be:</p>
+<pre><code>start f2
+start f1
+finish f2
+finish f1
+</code></pre>
+<p>Fortunately, that’s exactly I obtained on Linux. However, it hangs on Mac, which
+is due to the small stack size. The minimal size on Mac is defined in
+<code>signal.h</code> as <code>MINSIGSTKSZ</code>, so let just do that in the beginning.</p>
+<pre><code>#define SSIZE MINSIGSTKSZ // minimal 32K for Mac; 2K for Linux
+</code></pre>
+<p>After this, it works like a charm on both platforms. One
+<a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/25819228/running-c-code-on-mac-os-mavericks-gives-infinite-loop-but-works-fine-with-linux">SO question</a>
+was asked due to this stack size problem.</p>
+<h2 id="Does-uc-link-work-or-not"><a class="header-anchor" href="#Does-uc-link-work-or-not">§</a>Does <code>uc_link</code> work or not</h2>
+<h3 id="uc-link-with-makecontext"><a class="header-anchor" href="#uc-link-with-makecontext">§</a><code>uc_link</code> with <code>makecontext</code></h3>
+<p>I shall just quote the relevant paragraph from open group:</p>
+<pre><code>The uc_link member is used to determine the context that shall be resumed when
+the context being modified by makecontext() returns.
+</code></pre>
+<p>The first example we saw has proved that when it’s used with <code>makecontext</code>, it indicates the resuming context. Then,
+does <code>uc_link</code> also work with contexts that are not modified by <code>makecontext</code>? If we understand the spec correctly, the
+answer should be no.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">test_uc_link</span> <span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    flag = <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;start test_setcontext&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(swapcontext(&amp;ctx[<span class="number">1</span>], &amp;ctx[<span class="number">3</span>])) &#123;</span><br><span class="line">        <span class="built_in">puts</span>(<span class="string">&quot;err&quot;</span>);</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;finish test_setcontext&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">test_uc_link_main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> st[SSIZE];</span><br><span class="line"></span><br><span class="line">    getcontext(&amp;ctx[<span class="number">2</span>]);</span><br><span class="line">    ctx[<span class="number">2</span>].uc_stack.ss_sp = st;</span><br><span class="line">    ctx[<span class="number">2</span>].uc_stack.ss_size = <span class="keyword">sizeof</span> st;</span><br><span class="line">    ctx[<span class="number">2</span>].uc_link = &amp;ctx[<span class="number">0</span>];</span><br><span class="line">    makecontext(&amp;ctx[<span class="number">2</span>], test_uc_link, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    getcontext(&amp;ctx[<span class="number">3</span>]);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;ctx3&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(flag) &#123;</span><br><span class="line">        ctx[<span class="number">1</span>].uc_link = &amp;ctx[<span class="number">3</span>];</span><br><span class="line">        <span class="keyword">if</span>(swapcontext(&amp;ctx[<span class="number">4</span>], &amp;ctx[<span class="number">1</span>])) &#123;</span><br><span class="line">            <span class="built_in">puts</span>(<span class="string">&quot;err&quot;</span>);</span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="built_in">puts</span>(<span class="string">&quot;ctx4&quot;</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span>(swapcontext(&amp;ctx[<span class="number">0</span>], &amp;ctx[<span class="number">2</span>])) &#123;</span><br><span class="line">            <span class="built_in">puts</span>(<span class="string">&quot;err&quot;</span>);</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;over&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The output for Linux:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ctx3</span><br><span class="line">start test_setcontext</span><br><span class="line">ctx3</span><br><span class="line">finish test_setcontext</span><br><span class="line">over</span><br></pre></td></tr></table></figure>
+<p>and the output for Mac:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ctx3</span><br><span class="line">start test_setcontext</span><br><span class="line">ctx3</span><br><span class="line">finish test_setcontext</span><br><span class="line">ctx4</span><br><span class="line">over</span><br></pre></td></tr></table></figure>
+<p>The output is different, but they remain the same independent of whether we set <code>uc_link</code> or not. Therefore, we could
+say <code>uc_link</code> only works with contexts modified by <code>makecontext</code>. The different output from two platforms is caused by
+the fact that it’s undefined behavior for contexts that created by <code>setcontext</code> or <code>swapcontext</code> reaches the end.</p>
+<h3 id="Could-I-change-uc-link-after-makecontext"><a class="header-anchor" href="#Could-I-change-uc-link-after-makecontext">§</a>Could I change <code>uc_link</code> after <code>makecontext</code></h3>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">test_uc_link_2</span> <span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    flag = <span class="number">1</span>;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;start test_setcontext&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(swapcontext(&amp;ctx[<span class="number">2</span>], &amp;ctx[<span class="number">3</span>])) &#123;</span><br><span class="line">        <span class="built_in">puts</span>(<span class="string">&quot;err&quot;</span>);</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;finish test_setcontext&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">test_uc_link_2_main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> st[SSIZE];</span><br><span class="line"></span><br><span class="line">    getcontext(&amp;ctx[<span class="number">2</span>]);</span><br><span class="line">    ctx[<span class="number">2</span>].uc_stack.ss_sp = st;</span><br><span class="line">    ctx[<span class="number">2</span>].uc_stack.ss_size = <span class="keyword">sizeof</span> st;</span><br><span class="line">    ctx[<span class="number">2</span>].uc_link = &amp;ctx[<span class="number">0</span>];</span><br><span class="line">    makecontext(&amp;ctx[<span class="number">2</span>], test_uc_link_2, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    getcontext(&amp;ctx[<span class="number">3</span>]);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;ctx3&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(!flag) &#123;</span><br><span class="line">        <span class="keyword">if</span>(swapcontext(&amp;ctx[<span class="number">0</span>], &amp;ctx[<span class="number">2</span>])) &#123;</span><br><span class="line">            <span class="built_in">puts</span>(<span class="string">&quot;err&quot;</span>);</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ctx[<span class="number">2</span>].uc_link = &amp;ctx[<span class="number">4</span>];</span><br><span class="line">        <span class="keyword">if</span>(swapcontext(&amp;ctx[<span class="number">4</span>], &amp;ctx[<span class="number">2</span>])) &#123;</span><br><span class="line">            <span class="built_in">puts</span>(<span class="string">&quot;err&quot;</span>);</span><br><span class="line">        &#125;;</span><br><span class="line">        <span class="built_in">puts</span>(<span class="string">&quot;ctx4&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;over&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>The output for Linux:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">ctx3</span><br><span class="line">start test_setcontext</span><br><span class="line">ctx3</span><br><span class="line">finish test_setcontext</span><br><span class="line">over</span><br></pre></td></tr></table></figure>
+<p>and the output for Mac:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">ctx3</span><br><span class="line">start test_setcontext</span><br><span class="line">ctx3</span><br><span class="line">finish test_setcontext</span><br><span class="line">ctx4</span><br><span class="line">over</span><br></pre></td></tr></table></figure>
+<p>Therefore, Mac is more flexible on this topic. The doc doesn’t say anything about this, so I had to go to the source
+code to understand the behavior.
+<a target="_blank" rel="noopener" href="https://github.com/lattera/glibc/blob/a2f34833b1042d5d8eeb263b4cf4caaea138c4ad/sysdeps/unix/sysv/linux/x86_64/makecontext.c">makecontext</a>
+for Linux uses <code>uc_link</code> info when the <code>makecontext</code> is called; it’s stored in the stack already. While, in Mac,
+<a target="_blank" rel="noopener" href="http://www.opensource.apple.com/source/Libc/Libc-825.40.1/i386/gen/makecontext.c">makecontext</a> registers callback to
+use <code>uc_link</code> when context is finished, so we could change <code>uc_link</code> after the <code>makecontext</code> call.</p>
+<h2 id="Reusing-saved-context-multiple-times"><a class="header-anchor" href="#Reusing-saved-context-multiple-times">§</a>Reusing saved context multiple times</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">test_reusing</span> <span class="params">(<span class="type">void</span>)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;start test_setcontext&quot;</span>);</span><br><span class="line">    <span class="keyword">if</span>(swapcontext(&amp;ctx[<span class="number">1</span>], &amp;ctx[<span class="number">0</span>])) &#123;</span><br><span class="line">        <span class="built_in">puts</span>(<span class="string">&quot;err&quot;</span>);</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;finish test_setcontext&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span></span><br><span class="line"><span class="title function_">test_reusing_main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> st[SSIZE];</span><br><span class="line">    <span class="type">int</span> counter = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    getcontext(&amp;ctx[<span class="number">2</span>]);</span><br><span class="line">    ctx[<span class="number">2</span>].uc_stack.ss_sp = st;</span><br><span class="line">    ctx[<span class="number">2</span>].uc_stack.ss_size = <span class="keyword">sizeof</span> st;</span><br><span class="line">    ctx[<span class="number">2</span>].uc_link = &amp;ctx[<span class="number">0</span>];</span><br><span class="line">    makecontext(&amp;ctx[<span class="number">2</span>], test_reusing, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(swapcontext(&amp;ctx[<span class="number">0</span>], &amp;ctx[<span class="number">2</span>])) &#123;</span><br><span class="line">        <span class="built_in">puts</span>(<span class="string">&quot;err&quot;</span>);</span><br><span class="line">    &#125;;</span><br><span class="line">    <span class="keyword">if</span> (counter &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;btw&quot;</span>);</span><br><span class="line">    counter++;</span><br><span class="line">    setcontext(&amp;ctx[<span class="number">0</span>]);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;over&quot;</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>ctx[0]</code> is entered twice, first, the <code>swapcontext</code> inside <code>test_reusing</code>, second, the <code>setcontext</code> in main.</p>
+<p>The output for Linux:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">start test_setcontext</span><br><span class="line">btw</span><br></pre></td></tr></table></figure>
+<p>and the output for Mac:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">start test_setcontext</span><br><span class="line">btw</span><br><span class="line">over</span><br></pre></td></tr></table></figure>
+<p>The Linux output is the one I am expecting. I was so surprised to see ‘over’ on my stdout.</p>
+<p>The source of <a target="_blank" rel="noopener" href="http://www.opensource.apple.com/source/Libc/Libc-825.40.1/i386/gen/swapcontext.c">swapcontext</a> looks
+quite innocent, and I was stuck here for a very long time. Having no idea where the problem lies, I decided to
+re-implement <code>swapcontext</code> after the source code from Apple.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line">static int myswapcontext(ucontext_t *old, ucontext_t *new)</span><br><span class="line">&#123;</span><br><span class="line">    volatile int flag = 1;</span><br><span class="line">    int ret;</span><br><span class="line">    ret = getcontext(old);</span><br><span class="line">    if (flag) &#123;</span><br><span class="line">        flag = 0;</span><br><span class="line">        ret = setcontext(new);</span><br><span class="line">    &#125;</span><br><span class="line">    return ret;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">static void</span><br><span class="line">test_wrapper_main()</span><br><span class="line">&#123;</span><br><span class="line">    char st[SSIZE];</span><br><span class="line">    int counter = 0;</span><br><span class="line"></span><br><span class="line">    getcontext(&amp;ctx[2]);</span><br><span class="line">    ctx[2].uc_stack.ss_sp = st;</span><br><span class="line">    ctx[2].uc_stack.ss_size = sizeof st;</span><br><span class="line">    ctx[2].uc_link = &amp;ctx[0];</span><br><span class="line">    makecontext(&amp;ctx[2], test_reusing, 0);</span><br><span class="line"></span><br><span class="line">    if(myswapcontext(&amp;ctx[0], &amp;ctx[2])) &#123;</span><br><span class="line">        puts(&quot;err&quot;);</span><br><span class="line">    &#125;;</span><br><span class="line">    if (counter &gt; 0) &#123;</span><br><span class="line">        return;</span><br><span class="line">    &#125;</span><br><span class="line">    puts(&quot;btw&quot;);</span><br><span class="line">    counter++;</span><br><span class="line">    setcontext(&amp;ctx[0]);</span><br><span class="line">    puts(&quot;over&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>This time the output for both platforms “shifted” a bit; for Linux:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">start test_setcontext</span><br><span class="line">btw</span><br><span class="line">over</span><br></pre></td></tr></table></figure>
+<p>for Mac:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">start test_setcontext</span><br><span class="line">btw</span><br><span class="line">zsh: segmentation fault  ./a.out</span><br></pre></td></tr></table></figure>
+<p>Apparently, this naive implement of <code>swapcontext</code> is wrong. I kindly of understood why <code>swapcontext</code> on Linux is
+implemented like
+<a target="_blank" rel="noopener" href="https://github.com/lattera/glibc/blob/a2f34833b1042d5d8eeb263b4cf4caaea138c4ad/sysdeps/unix/sysv/linux/s390/s390-64/swapcontext.S">this</a>.
+(I don’t know assembly; hope I guessed it right.)</p>
+<h2 id="What-I-am-trying-to-do"><a class="header-anchor" href="#What-I-am-trying-to-do">§</a>What I am trying to do</h2>
+<p>I just want some basic cooperative scheduling for coroutine. The original
+problem could be simplified as the following snippets:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">static void</span><br><span class="line">test_coroutine (void)</span><br><span class="line">&#123;</span><br><span class="line">    puts(&quot;start test_setcontext&quot;);</span><br><span class="line">    if(swapcontext(&amp;ctx[1], &amp;ctx[0])) &#123;</span><br><span class="line">        puts(&quot;err&quot;);</span><br><span class="line">    &#125;;</span><br><span class="line">    puts(&quot;finish test_setcontext&quot;);</span><br><span class="line">    // setcontext(&amp;ctx[3]);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">static void</span><br><span class="line">test_coroutine_main()</span><br><span class="line">&#123;</span><br><span class="line">    char st[SSIZE];</span><br><span class="line">    int counter = 0;</span><br><span class="line"></span><br><span class="line">    getcontext(&amp;ctx[2]);</span><br><span class="line">    ctx[2].uc_stack.ss_sp = st;</span><br><span class="line">    ctx[2].uc_stack.ss_size = sizeof st;</span><br><span class="line">    ctx[2].uc_link = &amp;ctx[0];</span><br><span class="line">    makecontext(&amp;ctx[2], test_coroutine, 0);</span><br><span class="line"></span><br><span class="line">    if(swapcontext(&amp;ctx[0], &amp;ctx[2])) &#123;</span><br><span class="line">        puts(&quot;err&quot;);</span><br><span class="line">    &#125;;</span><br><span class="line">    puts(&quot;btw&quot;);</span><br><span class="line">    if(swapcontext(&amp;ctx[3], &amp;ctx[1])) &#123;</span><br><span class="line">        puts(&quot;err&quot;);</span><br><span class="line">    &#125;;</span><br><span class="line">    puts(&quot;over&quot;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>For Linux the output is the following, with exit status <code>23</code>.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">start test_setcontext</span><br><span class="line">btw</span><br><span class="line">finish test_setcontext</span><br><span class="line">btw</span><br><span class="line">finish test_setcontext</span><br></pre></td></tr></table></figure>
+<p>For Mac, due to the buggy implementation of <code>swapcontext</code>, it actually works:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">start test_setcontext</span><br><span class="line">btw</span><br><span class="line">finish test_setcontext</span><br><span class="line">over</span><br></pre></td></tr></table></figure>
+<p>If you understand everything so far, it’s quite obvious that the solution is just to add one explicit context switch in
+the end of <code>test_coroutine</code>, uncommenting the commented statement.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

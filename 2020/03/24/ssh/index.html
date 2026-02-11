@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="SSH Failed Attempts"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2020/03/24/ssh/"/>
+
+
+<meta name="description" content="I have a remote Linux (Debian) box on which most of my development work is done. As recommended by many, one should install fail2ban to slow down bots attempting ssh brute-forcing. Installing&#x2F;configur">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SSH Failed Attempts">
+<meta property="og:url" content="https://albertnetymk.github.io/2020/03/24/ssh/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="I have a remote Linux (Debian) box on which most of my development work is done. As recommended by many, one should install fail2ban to slow down bots attempting ssh brute-forcing. Installing&#x2F;configur">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-03-24T20:32:59.000Z">
+<meta property="article:modified_time" content="2020-04-02T22:19:53.421Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> SSH Failed Attempts - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          SSH Failed Attempts
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 24 2020
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>I have a remote Linux (Debian) box on which most of my development work is done. As recommended by many, one should install <code>fail2ban</code> to slow down
+bots attempting ssh brute-forcing. Installing/configuring <code>fail2ban</code> is quite straightforward, but after enabling it it’s unclear to me whether it’s
+getting the job done. Therefore, I write one program to count the number of failed ssh attempts to check. The full haskell program is attached in the
+end.</p>
+<p>Running it gives the following output. It’s clear that <code>fail2ban</code> is effective in blocking those malicious IPs.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">$ runghc ssh.hs</span><br><span class="line">(2020-03-24 02:00:00 UTC,141)</span><br><span class="line">(2020-03-24 03:00:00 UTC,173)</span><br><span class="line">(2020-03-24 04:00:00 UTC,138)</span><br><span class="line">(2020-03-24 05:00:00 UTC,79)</span><br><span class="line">(2020-03-24 06:00:00 UTC,94)</span><br><span class="line">(2020-03-24 07:00:00 UTC,115)</span><br><span class="line">(2020-03-24 08:00:00 UTC,164)</span><br><span class="line">(2020-03-24 09:00:00 UTC,258)</span><br><span class="line">(2020-03-24 10:00:00 UTC,190)</span><br><span class="line">(2020-03-24 11:00:00 UTC,183)</span><br><span class="line">(2020-03-24 12:00:00 UTC,46)</span><br><span class="line">(2020-03-24 13:00:00 UTC,17) # I enabled fail2ban here</span><br><span class="line">(2020-03-24 14:00:00 UTC,10)</span><br><span class="line">(2020-03-24 15:00:00 UTC,22)</span><br><span class="line">(2020-03-24 16:00:00 UTC,11)</span><br><span class="line">(2020-03-24 17:00:00 UTC,5)</span><br><span class="line">(2020-03-24 18:00:00 UTC,9)</span><br><span class="line">(2020-03-24 19:00:00 UTC,4)</span><br><span class="line">(2020-03-24 20:00:00 UTC,8)</span><br><span class="line">(2020-03-24 21:00:00 UTC,2)</span><br></pre></td></tr></table></figure>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&#123;-# LANGUAGE OverloadedStrings #-&#125;</span></span><br><span class="line"><span class="keyword">import</span> <span class="keyword">qualified</span> Data.Text <span class="keyword">as</span> S</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">qualified</span> Data.Text.IO <span class="keyword">as</span> S</span><br><span class="line"><span class="keyword">import</span> Data.Time</span><br><span class="line"><span class="keyword">import</span> Data.List</span><br><span class="line"><span class="keyword">import</span> Data.Fixed</span><br><span class="line"><span class="keyword">import</span> Data.Function</span><br><span class="line"><span class="keyword">import</span> Control.Lens</span><br><span class="line"><span class="keyword">import</span> Control.Monad</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="type">Line</span> = <span class="type">S</span>.<span class="type">Text</span></span></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="type">Date</span> = <span class="type">UTCTime</span></span></span><br><span class="line"><span class="class"><span class="keyword">type</span> <span class="type">IP</span> = <span class="type">S</span>.<span class="type">Text</span></span></span><br><span class="line"></span><br><span class="line"><span class="title">file</span> = <span class="string">&quot;/var/log/auth.log&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="title">extract_tuple</span> :: <span class="type">Line</span> -&gt; (<span class="type">Date</span>, <span class="type">IP</span>)</span><br><span class="line"><span class="title">extract_tuple</span> line =</span><br><span class="line">  <span class="keyword">let</span></span><br><span class="line">    date_str = <span class="type">S</span>.unpack . <span class="type">S</span>.unwords . take <span class="number">3</span> . <span class="type">S</span>.words $ line</span><br><span class="line">    date = parseTimeOrError <span class="type">False</span> defaultTimeLocale <span class="string">&quot;%b %e %H:%M:%S&quot;</span> date_str</span><br><span class="line">    date_hour_precision = date &amp; minute .~ <span class="number">0</span> &amp; second .~ <span class="number">0</span></span><br><span class="line">    ip = (!! <span class="number">2</span>) . reverse . <span class="type">S</span>.words $ line</span><br><span class="line">  <span class="keyword">in</span></span><br><span class="line">    (date_hour_precision, ip)</span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">    hms :: <span class="type">Lens&#x27;</span> <span class="type">UTCTime</span> (<span class="type">Int</span>, <span class="type">Int</span>, <span class="type">Pico</span>)</span><br><span class="line">    hms = lens getter setter</span><br><span class="line">      <span class="keyword">where</span></span><br><span class="line">        getter t =</span><br><span class="line">          <span class="keyword">let</span> <span class="type">TimeOfDay</span> h m s = t &amp; utctDayTime &amp; timeToTimeOfDay</span><br><span class="line">           <span class="keyword">in</span> (h, m, s)</span><br><span class="line">        setter t (h, m, s) =</span><br><span class="line">          t&#123;utctDayTime = timeOfDayToTime (<span class="type">TimeOfDay</span> h m s)&#125;</span><br><span class="line"></span><br><span class="line">    minute :: <span class="type">Lens&#x27;</span> <span class="type">UTCTime</span> <span class="type">Int</span></span><br><span class="line">    minute = lens (^.hms._2) setter</span><br><span class="line">      <span class="keyword">where</span> setter t v = t &amp; hms ._2 .~ v</span><br><span class="line"></span><br><span class="line">    second :: <span class="type">Lens&#x27;</span> <span class="type">UTCTime</span> <span class="type">Pico</span></span><br><span class="line">    second = lens (^.hms._3) setter</span><br><span class="line">      <span class="keyword">where</span> setter t v = t &amp; hms ._3 .~ v</span><br><span class="line"></span><br><span class="line"><span class="title">process</span> contents = <span class="keyword">do</span></span><br><span class="line">  y &lt;- (^.year) &lt;$&gt; getCurrentTime</span><br><span class="line">  <span class="type">S</span>.lines contents</span><br><span class="line">    &amp; filter predicate</span><br><span class="line">    &amp; map extract_tuple</span><br><span class="line">    &amp; aggregate</span><br><span class="line">    &amp; reverse &amp; take <span class="number">20</span> &amp; reverse</span><br><span class="line">    <span class="comment">-- &amp; take 4</span></span><br><span class="line">    &amp; map (_1 . year .~ y)</span><br><span class="line">    &amp; mapM_ print</span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">    predicate = liftM2 (&amp;&amp;) (<span class="type">S</span>.isInfixOf <span class="string">&quot;sshd&quot;</span>) (<span class="type">S</span>.isInfixOf <span class="string">&quot;Invalid&quot;</span>)</span><br><span class="line"></span><br><span class="line">    aggregate :: [(<span class="type">Date</span>, <span class="type">IP</span>)] -&gt; [(<span class="type">Date</span>, <span class="type">Int</span>)]</span><br><span class="line">    aggregate pairs = pairs</span><br><span class="line">      &amp; groupBy ((==) `on` fst)</span><br><span class="line">      &amp; map (\l -&gt; (l ^?! (element <span class="number">0</span> . _1), length l))</span><br><span class="line"></span><br><span class="line">    ymd :: <span class="type">Lens&#x27;</span> <span class="type">UTCTime</span> (<span class="type">Integer</span>, <span class="type">Int</span>, <span class="type">Int</span>)</span><br><span class="line">    ymd = lens getter setter</span><br><span class="line">      <span class="keyword">where</span></span><br><span class="line">        getter t = t &amp; utctDay &amp; toGregorian</span><br><span class="line">        setter t (y, m, d) = t&#123;utctDay = fromGregorian y m d&#125;</span><br><span class="line"></span><br><span class="line">    year :: <span class="type">Lens&#x27;</span> <span class="type">UTCTime</span> <span class="type">Integer</span></span><br><span class="line">    year = lens (^.ymd._1) setter</span><br><span class="line">      <span class="keyword">where</span></span><br><span class="line">        setter t y =</span><br><span class="line">          <span class="keyword">let</span> (_, m, d) = t^.ymd</span><br><span class="line">          <span class="keyword">in</span> t&#123;utctDay = fromGregorian y m d&#125;</span><br><span class="line"></span><br><span class="line"><span class="title">main</span> :: <span class="type">IO</span> ()</span><br><span class="line"><span class="title">main</span> = <span class="keyword">do</span></span><br><span class="line">  <span class="type">S</span>.readFile file &gt;&gt;= process</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

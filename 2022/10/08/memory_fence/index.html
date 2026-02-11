@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Memory Fence"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2022/10/08/memory_fence/"/>
+
+
+<meta name="description" content="From https:&#x2F;&#x2F;en.cppreference.com&#x2F;w&#x2F;cpp&#x2F;atomic&#x2F;atomic_thread_fence :  atomic_thread_fence imposes stronger synchronization constraints than an atomic store operation with the same std::memory_order. Wh">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Memory Fence">
+<meta property="og:url" content="https://albertnetymk.github.io/2022/10/08/memory_fence/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="From https:&#x2F;&#x2F;en.cppreference.com&#x2F;w&#x2F;cpp&#x2F;atomic&#x2F;atomic_thread_fence :  atomic_thread_fence imposes stronger synchronization constraints than an atomic store operation with the same std::memory_order. Wh">
+<meta property="og:locale">
+<meta property="article:published_time" content="2022-10-08T20:29:33.000Z">
+<meta property="article:modified_time" content="2023-12-24T19:39:54.795Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Memory Fence - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Memory Fence
+        
+      </h1>
+
+      <time class="post-time">
+          Oct 8 2022
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>From <a target="_blank" rel="noopener" href="https://en.cppreference.com/w/cpp/atomic/atomic_thread_fence">https://en.cppreference.com/w/cpp/atomic/atomic_thread_fence</a> :</p>
+<blockquote>
+<p>atomic_thread_fence imposes stronger synchronization constraints than an atomic store operation with the same
+std::memory_order. While an atomic store-release operation prevents all preceding reads and writes from moving past
+the store-release, an atomic_thread_fence with memory_order_release ordering prevents all preceding reads and writes
+from moving past all subsequent stores.</p>
+</blockquote>
+<p>Just a small herd7 example to help me unpack the text.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">C fence_vs_atomic</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">[x] = <span class="number">0</span>;</span><br><span class="line">[y] = <span class="number">0</span>;</span><br><span class="line">[z] = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">P0 (<span class="type">atomic_int</span>* x, <span class="type">atomic_int</span>* y, <span class="type">atomic_int</span>* z) &#123;</span><br><span class="line">  atomic_store_explicit(x, <span class="number">1</span>, memory_order_relaxed);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 1. preceding operations can&#x27;t go past this store (y here, but z can flow up)</span></span><br><span class="line">  atomic_store_explicit(y, <span class="number">1</span>, memory_order_release);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 2. preceding operations can&#x27;t go pass any stores (y and z here)</span></span><br><span class="line">  <span class="comment">/* atomic_thread_fence(memory_order_release); */</span></span><br><span class="line">  <span class="comment">/* atomic_store_explicit(y, 1, memory_order_relaxed); */</span></span><br><span class="line"></span><br><span class="line">  atomic_store_explicit(z, <span class="number">1</span>, memory_order_relaxed);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">P1 (<span class="type">atomic_int</span>* x, <span class="type">atomic_int</span>* y, <span class="type">atomic_int</span>* z) &#123;</span><br><span class="line">  r0 = atomic_load_explicit(z, memory_order_acquire);</span><br><span class="line">  <span class="keyword">if</span> (r0 == <span class="number">1</span>) &#123;</span><br><span class="line">    r1 = atomic_load_explicit(x, memory_order_relaxed);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">exists</span><br><span class="line">(  <span class="literal">true</span></span><br><span class="line">/\ <span class="number">1</span>:r0 == <span class="number">1</span></span><br><span class="line">/\ <span class="number">1</span>:r1 == <span class="number">0</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>The specified result can occur with approach 1 but not with approach 2, because a fence offers stronger synchronization
+than an atomic store.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

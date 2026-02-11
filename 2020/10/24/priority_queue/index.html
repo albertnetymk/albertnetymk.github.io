@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Priority Queue in Java"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2020/10/24/priority_queue/"/>
+
+
+<meta name="description" content="Implementation of heap (priority queue) in Java. Nothing fundamentally hard; the idea of visualizing an array to a tree is neat. 12345678910111213141516171819202122232425262728293031323334353637383940">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Priority Queue in Java">
+<meta property="og:url" content="https://albertnetymk.github.io/2020/10/24/priority_queue/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Implementation of heap (priority queue) in Java. Nothing fundamentally hard; the idea of visualizing an array to a tree is neat. 12345678910111213141516171819202122232425262728293031323334353637383940">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-10-24T16:45:07.000Z">
+<meta property="article:modified_time" content="2021-10-16T19:16:05.000Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Priority Queue in Java - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Priority Queue in Java
+        
+      </h1>
+
+      <time class="post-time">
+          Oct 24 2020
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Implementation of heap (priority queue) in Java. Nothing fundamentally hard; the idea of visualizing an array to a tree is neat.</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br><span class="line">206</span><br><span class="line">207</span><br><span class="line">208</span><br><span class="line">209</span><br><span class="line">210</span><br><span class="line">211</span><br><span class="line">212</span><br><span class="line">213</span><br><span class="line">214</span><br><span class="line">215</span><br><span class="line">216</span><br><span class="line">217</span><br><span class="line">218</span><br><span class="line">219</span><br><span class="line">220</span><br><span class="line">221</span><br><span class="line">222</span><br><span class="line">223</span><br><span class="line">224</span><br><span class="line">225</span><br><span class="line">226</span><br><span class="line">227</span><br><span class="line">228</span><br><span class="line">229</span><br><span class="line">230</span><br><span class="line">231</span><br><span class="line">232</span><br><span class="line">233</span><br><span class="line">234</span><br><span class="line">235</span><br><span class="line">236</span><br><span class="line">237</span><br><span class="line">238</span><br><span class="line">239</span><br><span class="line">240</span><br><span class="line">241</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.File;</span><br><span class="line"><span class="keyword">import</span> java.io.IOException;</span><br><span class="line"><span class="keyword">import</span> java.util.*;</span><br><span class="line"><span class="keyword">import</span> java.util.stream.Collectors;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">Main</span> &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">Heap</span> &#123;</span><br><span class="line">        <span class="comment">// the logic size of heap</span></span><br><span class="line">        <span class="keyword">private</span> <span class="type">int</span> length;</span><br><span class="line">        <span class="keyword">private</span> <span class="type">int</span>[] arr;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// assert x in [low, max)</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">assert_range</span><span class="params">(<span class="type">int</span> x, <span class="type">int</span> low, <span class="type">int</span> max)</span> &#123;</span><br><span class="line">            <span class="keyword">assert</span> (low &lt;= x &amp;&amp; x &lt; max);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">swap</span><span class="params">(<span class="type">int</span> i, <span class="type">int</span> j)</span> &#123;</span><br><span class="line">            assert_range(i, <span class="number">0</span>, length);</span><br><span class="line">            assert_range(j, <span class="number">0</span>, length);</span><br><span class="line">            <span class="type">var</span> <span class="variable">tmp</span> <span class="operator">=</span> arr[i];</span><br><span class="line">            arr[i] = arr[j];</span><br><span class="line">            arr[j] = tmp;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// assuming left and right subtree are max-heap already;</span></span><br><span class="line">        <span class="comment">// O(logN): depth of the tree</span></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">maxHeapify</span><span class="params">(<span class="type">int</span> i)</span> &#123;</span><br><span class="line">            assert_range(i, <span class="number">0</span>, length);</span><br><span class="line">            <span class="type">var</span> <span class="variable">largest</span> <span class="operator">=</span> i;</span><br><span class="line">            <span class="type">var</span> <span class="variable">left</span> <span class="operator">=</span> <span class="number">2</span> * i + <span class="number">1</span>;</span><br><span class="line">            <span class="type">var</span> <span class="variable">right</span> <span class="operator">=</span> <span class="number">2</span> * i + <span class="number">2</span>;</span><br><span class="line">            <span class="keyword">if</span> (left &lt; length &amp;&amp; arr[left] &gt; arr[largest])</span><br><span class="line">                largest = left;</span><br><span class="line">            <span class="keyword">if</span> (right &lt; length &amp;&amp; arr[right] &gt; arr[largest])</span><br><span class="line">                largest = right;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (largest != i) &#123;</span><br><span class="line">                <span class="comment">// fix the violation</span></span><br><span class="line">                swap(i, largest);</span><br><span class="line">                maxHeapify(largest);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// it seems O(NlogN), but it&#x27;s actually O(N), since #nodes per level</span></span><br><span class="line">        <span class="comment">// drops exponentially, while the depth grows linearly</span></span><br><span class="line">        <span class="keyword">private</span> <span class="title function_">Heap</span><span class="params">(<span class="type">int</span>[] arr)</span> &#123;</span><br><span class="line">            length = arr.length;</span><br><span class="line">            <span class="built_in">this</span>.arr = arr;</span><br><span class="line">            <span class="comment">// working bottom-up;</span></span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> length / <span class="number">2</span> - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">                maxHeapify(i);</span><br><span class="line">            &#125;</span><br><span class="line">            verify();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">verify</span><span class="params">(<span class="type">int</span> i)</span> &#123;</span><br><span class="line">            <span class="keyword">assert</span> (i &lt; length);</span><br><span class="line">            <span class="type">var</span> <span class="variable">left</span> <span class="operator">=</span> <span class="number">2</span> * i + <span class="number">1</span>;</span><br><span class="line">            <span class="type">var</span> <span class="variable">right</span> <span class="operator">=</span> <span class="number">2</span> * i + <span class="number">2</span>;</span><br><span class="line">            <span class="keyword">if</span> (left &lt; length) &#123;</span><br><span class="line">                <span class="keyword">assert</span> (arr[i] &gt;= arr[left]);</span><br><span class="line">                verify(left);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (right &lt; length) &#123;</span><br><span class="line">                <span class="keyword">assert</span> (arr[i] &gt;= arr[right]);</span><br><span class="line">                verify(right);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">verify</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (length != <span class="number">0</span>) &#123;</span><br><span class="line">                verify(<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// O(1)</span></span><br><span class="line">        <span class="keyword">public</span> <span class="type">boolean</span> <span class="title function_">isEmpty</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> length == <span class="number">0</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// O(logN)</span></span><br><span class="line">        <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">poll</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">assert</span> (!isEmpty());</span><br><span class="line">            <span class="type">var</span> <span class="variable">ret</span> <span class="operator">=</span> arr[<span class="number">0</span>];</span><br><span class="line">            <span class="keyword">if</span> (length &gt; <span class="number">1</span>) &#123;</span><br><span class="line">                swap(<span class="number">0</span>, length - <span class="number">1</span>);</span><br><span class="line">                length--;</span><br><span class="line">                maxHeapify(<span class="number">0</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                length--;</span><br><span class="line">            &#125;</span><br><span class="line">            verify();</span><br><span class="line">            <span class="keyword">return</span> ret;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// O(logN)</span></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">add</span><span class="params">(<span class="type">int</span> e)</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (length == arr.length) &#123;</span><br><span class="line">                <span class="comment">// expand underlying array</span></span><br><span class="line">                arr = Arrays.copyOf(arr, arr.length + <span class="number">100</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            arr[length++] = e;</span><br><span class="line">            <span class="comment">// fix potential violation; go up level by level</span></span><br><span class="line">            <span class="type">var</span> <span class="variable">i</span> <span class="operator">=</span> length - <span class="number">1</span>;</span><br><span class="line">            <span class="type">int</span> parent;</span><br><span class="line">            <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">                parent = (i - <span class="number">1</span>) / <span class="number">2</span>;</span><br><span class="line">                <span class="keyword">if</span> (i == <span class="number">0</span> || arr[parent] &gt;= arr[i]) <span class="keyword">break</span>;</span><br><span class="line">                swap(parent, i);</span><br><span class="line">                i = parent;</span><br><span class="line">            &#125;</span><br><span class="line">            verify();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">static</span> Heap <span class="title function_">fromArrayInplace</span><span class="params">(<span class="type">int</span>[] arr)</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Heap</span>(arr);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">static</span> Heap <span class="title function_">fromArray</span><span class="params">(<span class="type">int</span>[] arr)</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">Heap</span>(arr.clone());</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// heap sort inplace</span></span><br><span class="line">        <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">heapSort</span><span class="params">(<span class="type">int</span>[] arr)</span> &#123;</span><br><span class="line">            <span class="type">var</span> <span class="variable">heap</span> <span class="operator">=</span> fromArrayInplace(arr);</span><br><span class="line">            <span class="keyword">while</span> (heap.length &gt; <span class="number">1</span>) &#123;</span><br><span class="line">                <span class="comment">// first element is the largest; place it in the end</span></span><br><span class="line">                heap.swap(<span class="number">0</span>, heap.length - <span class="number">1</span>);</span><br><span class="line">                <span class="comment">// logically shrinking the heap</span></span><br><span class="line">                heap.length--;</span><br><span class="line">                <span class="comment">// fix potential violation</span></span><br><span class="line">                heap.maxHeapify(<span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">QCRunner</span> &#123;</span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">int</span> <span class="variable">TESTMAX</span> <span class="operator">=</span> <span class="number">100000</span>;</span><br><span class="line">        <span class="keyword">static</span> <span class="type">Random</span> <span class="variable">rand</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Random</span>();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">static</span> <span class="type">int</span>[] generate_ints() &#123;</span><br><span class="line">            <span class="keyword">return</span> rand.ints(rand.nextInt(<span class="number">10</span>) + <span class="number">1</span>).toArray();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">qc_heap_sort</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; TESTMAX; ++i) &#123;</span><br><span class="line">                <span class="type">var</span> <span class="variable">o_arr</span> <span class="operator">=</span> generate_ints();</span><br><span class="line">                <span class="type">var</span> <span class="variable">a_arr</span> <span class="operator">=</span> o_arr.clone();</span><br><span class="line">                Arrays.sort(a_arr);</span><br><span class="line">                <span class="type">var</span> <span class="variable">b_arr</span> <span class="operator">=</span> o_arr.clone();</span><br><span class="line">                Heap.heapSort(b_arr);</span><br><span class="line">                <span class="keyword">assert</span> (Arrays.equals(a_arr, b_arr));</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">qc_heap_poll</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; TESTMAX; ++i) &#123;</span><br><span class="line">                <span class="type">var</span> <span class="variable">o_arr</span> <span class="operator">=</span> generate_ints();</span><br><span class="line">                <span class="type">var</span> <span class="variable">a_queue</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;Integer&gt;(o_arr.length, Collections.reverseOrder());</span><br><span class="line">                a_queue.addAll(Arrays.stream(o_arr).boxed().collect(Collectors.toList()));</span><br><span class="line">                <span class="type">var</span> <span class="variable">b_queue</span> <span class="operator">=</span> Heap.fromArray(o_arr);</span><br><span class="line">                <span class="keyword">while</span> (!a_queue.isEmpty()) &#123;</span><br><span class="line">                    <span class="type">var</span> <span class="variable">a</span> <span class="operator">=</span> a_queue.poll();</span><br><span class="line">                    <span class="type">var</span> <span class="variable">b</span> <span class="operator">=</span> b_queue.poll();</span><br><span class="line">                    <span class="keyword">assert</span> (a == b);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">assert</span> (b_queue.isEmpty());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">qc_heap_add</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; TESTMAX; ++i) &#123;</span><br><span class="line">                <span class="type">var</span> <span class="variable">o_arr</span> <span class="operator">=</span> generate_ints();</span><br><span class="line">                <span class="type">var</span> <span class="variable">a_queue</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">PriorityQueue</span>&lt;Integer&gt;(o_arr.length, Collections.reverseOrder());</span><br><span class="line">                <span class="type">var</span> <span class="variable">b_queue</span> <span class="operator">=</span> Heap.fromArray(<span class="keyword">new</span> <span class="title class_">int</span>[<span class="number">0</span>]);</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">var</span> e : o_arr) &#123;</span><br><span class="line">                    a_queue.add(e);</span><br><span class="line">                    b_queue.add(e);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">while</span> (!a_queue.isEmpty()) &#123;</span><br><span class="line">                    <span class="type">var</span> <span class="variable">a</span> <span class="operator">=</span> a_queue.poll();</span><br><span class="line">                    <span class="type">var</span> <span class="variable">b</span> <span class="operator">=</span> b_queue.poll();</span><br><span class="line">                    <span class="keyword">assert</span> (a == b);</span><br><span class="line">                &#125;</span><br><span class="line">                <span class="keyword">assert</span> (b_queue.isEmpty());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">check</span><span class="params">()</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">            <span class="comment">// only run it when assertion is on</span></span><br><span class="line">            <span class="type">var</span> <span class="variable">is_assert_on</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">            <span class="type">assert</span> <span class="variable">is_assert_on</span> <span class="operator">=</span> <span class="literal">true</span>;</span><br><span class="line">            <span class="keyword">if</span> (!is_assert_on) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">Exception</span>(<span class="string">&quot;assertion no enabled&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            qc_heap_sort();</span><br><span class="line">            qc_heap_poll();</span><br><span class="line">            qc_heap_add();</span><br><span class="line">            System.out.println(<span class="string">&quot;Success&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="type">int</span> <span class="title function_">exec</span><span class="params">(Class&lt;?&gt; clazz, List&lt;String&gt; jvmArgs)</span> <span class="keyword">throws</span> IOException,</span><br><span class="line">            InterruptedException &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">javaHome</span> <span class="operator">=</span> System.getProperty(<span class="string">&quot;java.home&quot;</span>);</span><br><span class="line">        <span class="type">String</span> <span class="variable">javaBin</span> <span class="operator">=</span> javaHome + File.separator + <span class="string">&quot;bin&quot;</span> + File.separator + <span class="string">&quot;java&quot;</span>;</span><br><span class="line">        <span class="type">String</span> <span class="variable">classpath</span> <span class="operator">=</span> System.getProperty(<span class="string">&quot;java.class.path&quot;</span>);</span><br><span class="line">        <span class="type">String</span> <span class="variable">className</span> <span class="operator">=</span> clazz.getName();</span><br><span class="line"></span><br><span class="line">        List&lt;String&gt; command = <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;();</span><br><span class="line">        command.add(javaBin);</span><br><span class="line">        command.addAll(jvmArgs);</span><br><span class="line">        command.add(<span class="string">&quot;-cp&quot;</span>);</span><br><span class="line">        command.add(classpath);</span><br><span class="line">        command.add(className);</span><br><span class="line"></span><br><span class="line">        <span class="type">ProcessBuilder</span> <span class="variable">builder</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ProcessBuilder</span>(command);</span><br><span class="line">        <span class="type">Process</span> <span class="variable">process</span> <span class="operator">=</span> builder.inheritIO().start();</span><br><span class="line">        process.waitFor();</span><br><span class="line">        <span class="keyword">return</span> process.exitValue();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">config_jvm</span><span class="params">(String[] jvm_args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="type">String</span> <span class="variable">custom_jvm_args</span> <span class="operator">=</span> <span class="string">&quot;custom_jvm_args&quot;</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (System.getProperty(custom_jvm_args) == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="type">var</span> <span class="variable">flags</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ArrayList</span>&lt;&gt;(Arrays.asList(jvm_args));</span><br><span class="line">            flags.add(<span class="number">0</span>, <span class="string">&quot;-D&quot;</span> + custom_jvm_args);</span><br><span class="line">            <span class="type">var</span> <span class="variable">ret</span> <span class="operator">=</span> exec(Main.class, flags);</span><br><span class="line">            System.exit(ret);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        config_jvm(<span class="keyword">new</span> <span class="title class_">String</span>[]&#123;</span><br><span class="line">          <span class="string">&quot;-ea&quot;</span>, <span class="comment">// enable assertion</span></span><br><span class="line">        &#125;);</span><br><span class="line"></span><br><span class="line">        QCRunner.check();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="references"><a class="header-anchor" href="#references">§</a>references</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.hackerearth.com/practice/data-structures/trees/heapspriority-queues/tutorial/">https://www.hackerearth.com/practice/data-structures/trees/heapspriority-queues/tutorial/</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=B7hVxCmfPtM">https://www.youtube.com/watch?v=B7hVxCmfPtM</a></li>
+<li><a target="_blank" rel="noopener" href="https://dzone.com/articles/running-a-java-class-as-a-subprocess">https://dzone.com/articles/running-a-java-class-as-a-subprocess</a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

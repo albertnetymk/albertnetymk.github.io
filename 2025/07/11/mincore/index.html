@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Linux Virtual Memory 101"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2025/07/11/mincore/"/>
+
+
+<meta name="description" content="In Linux virtual memory (VM), there are two orthogonal attributes attached to a particular address range or memory region:  Accessibility – Whether the memory is accessible (readable&#x2F;writable), corres">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux Virtual Memory 101">
+<meta property="og:url" content="https://albertnetymk.github.io/2025/07/11/mincore/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="In Linux virtual memory (VM), there are two orthogonal attributes attached to a particular address range or memory region:  Accessibility – Whether the memory is accessible (readable&#x2F;writable), corres">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-07-11T11:39:55.000Z">
+<meta property="article:modified_time" content="2025-07-12T09:32:23.994Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Linux Virtual Memory 101 - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Linux Virtual Memory 101
+        
+      </h1>
+
+      <time class="post-time">
+          Jul 11 2025
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>In Linux virtual memory (VM), there are two orthogonal attributes attached to a particular address range or memory region:</p>
+<ol>
+<li><strong>Accessibility</strong> – Whether the memory is accessible (readable/writable), corresponding to <code>PROT_READ</code>, <code>PROT_WRITE</code>, etc.</li>
+<li><strong>Resident Status</strong> – Whether the memory is paged in (i.e., faulted in) and backed by physical memory.</li>
+</ol>
+<p>These two attributes combine to form <strong>four possible states</strong>:</p>
+<h3 id="1-Inaccessible-Non-Resident"><a class="header-anchor" href="#1-Inaccessible-Non-Resident">§</a>1. <strong>Inaccessible &amp; Non-Resident</strong></h3>
+<p>This is the <em>initial</em> state — memory is <em>reserved</em> so that the address range cannot be used by other components of the
+current process. There is no physical memory backing it yet.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mmap(..., PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, ...)</span><br></pre></td></tr></table></figure>
+<p>This makes the region inaccessible and non-resident — a virtual reservation without committing physical resources.</p>
+<h3 id="2-Accessible-Non-Resident"><a class="header-anchor" href="#2-Accessible-Non-Resident">§</a>2. <strong>Accessible &amp; Non-Resident</strong></h3>
+<p>This is a <em>transient</em> state. The memory is accessible but not yet backed by physical memory. It will be <strong>lazily paged
+in</strong> on first write.</p>
+<p>One can enter this state either in two steps:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mmap(..., PROT_NONE, ...);</span><br><span class="line">mprotect(..., PROT_READ | PROT_WRITE);</span><br></pre></td></tr></table></figure>
+<p>Or in one go:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mmap(..., PROT_READ | PROT_WRITE, ...);</span><br></pre></td></tr></table></figure>
+<p>This lazy allocation allows Linux to economize on physical memory. Many programs request large amounts of memory but
+never use most of it — like travel insurance that often goes unused.</p>
+<p>Of course, for this lazy scheme to work, the OS must be able to provide the physical memory when the region is accessed.
+In other words, the OS has promised to supply this memory on demand, which is why this state is often referred to as
+<em>committed</em>. The <code>Committed_AS</code> entry in <code>/proc/meminfo</code> reflects this commitment.</p>
+<h3 id="3-Accessible-Resident"><a class="header-anchor" href="#3-Accessible-Resident">§</a>3. <strong>Accessible &amp; Resident</strong></h3>
+<p>This is the <em>final</em> and fully usable state — memory is accessible and backed by physical memory, allowing access with no
+page faults.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mmap(..., PROT_READ | PROT_WRITE, ...);</span><br><span class="line">madvise(..., MADV_POPULATE_WRITE);</span><br></pre></td></tr></table></figure>
+<p>The <code>MADV_POPULATE_WRITE</code> hint causes the kernel to populate pages immediately, ensuring they’re resident.</p>
+<h3 id="4-Inaccessible-Resident"><a class="header-anchor" href="#4-Inaccessible-Resident">§</a>4. <strong>Inaccessible &amp; Resident</strong></h3>
+<p>This is an unusual state. Memory is backed by physical pages but cannot be accessed due to its protection settings.</p>
+<p>Normally, if memory is inaccessible, there is no reason for it to remain resident. So this state is almost always
+<strong>transient</strong>, where the memory is expected to become accessible soon.</p>
+<p>One can create this state by first writing to the memory (to make it resident and dirty), then removing access
+permissions.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mmap(..., PROT_READ | PROT_WRITE, ...);</span><br><span class="line">memset(..., 0, ...); // to make mem dirty so that they must be preserved</span><br><span class="line">mprotect(..., PROT_NONE);</span><br></pre></td></tr></table></figure>
+<h2 id="Summary"><a class="header-anchor" href="#Summary">§</a>Summary</h2>
+<p>The <strong>typical lifecycle</strong> of memory goes:</p>
+<pre><code>1 (reserved) → 2 (committed) → 3 (resident)
+</code></pre>
+<p>For example, heap memory in the JVM typically progresses from:</p>
+<ul>
+<li><strong>Reserved</strong> → address space claimed</li>
+<li><strong>Committed</strong> → memory is promised to be accessible</li>
+<li><strong>Pretouched</strong> → memory faulted in proactively</li>
+</ul>
+<p>The following are some code to study this lifecycle.</p>
+<h2 id="Normal-Page"><a class="header-anchor" href="#Normal-Page">§</a>Normal Page</h2>
+<p>First, we allocate a few pages; since, by default, lazy mapping is used, none of them are resident in physical memory. A
+page will be backed by physical memory on the first write into that page.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cassert&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdlib&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">static</span> <span class="type">void</span> <span class="title">meminfo</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="built_in">system</span>(<span class="string">&quot;cat /proc/meminfo | grep Committed_AS&quot;</span>);</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">void</span>)</span> </span>&#123;</span><br><span class="line">  <span class="comment">// to flush meminfo output</span></span><br><span class="line">  <span class="built_in">setbuf</span>(stdout, <span class="literal">NULL</span>);</span><br><span class="line">  <span class="keyword">constexpr</span> <span class="type">int</span> num_pages = <span class="number">10</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">char</span> vec[num_pages];</span><br><span class="line">  <span class="type">int</span> res;</span><br><span class="line">  <span class="type">const</span> <span class="type">size_t</span> PS = <span class="built_in">sysconf</span>(_SC_PAGESIZE);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Init state&quot;</span>);</span><br><span class="line">  <span class="built_in">meminfo</span>();</span><br><span class="line"></span><br><span class="line">  <span class="type">void</span> *addr = <span class="built_in">mmap</span>(<span class="literal">nullptr</span>, num_pages * PS, PROT_NONE,</span><br><span class="line">                    MAP_PRIVATE | MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (addr == MAP_FAILED) &#123;</span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;mmap&quot;</span>);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;Reserved %d 4K-pages\n&quot;</span>, num_pages);</span><br><span class="line">  <span class="built_in">meminfo</span>();</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Commit those pages&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">mprotect</span>(addr, num_pages * PS, PROT_READ|PROT_WRITE) != <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;mprotect&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">meminfo</span>();</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Still non-resident&quot;</span>);</span><br><span class="line">  res = <span class="built_in">mincore</span>(addr, num_pages * PS, vec);</span><br><span class="line">  <span class="built_in">assert</span>(res == <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_pages; ++i) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, (vec[i] &amp; <span class="number">1</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Write to the the first 5 pages&quot;</span>);</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i)</span><br><span class="line">    ((<span class="type">char</span> *)addr)[i * PS] = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">  res = <span class="built_in">mincore</span>(addr, num_pages * PS, vec);</span><br><span class="line">  <span class="built_in">assert</span>(res == <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_pages; ++i) &#123;</span><br><span class="line">    <span class="built_in">assert</span>((vec[i] &amp; <span class="number">1</span>) == (i &lt; <span class="number">5</span>));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, (vec[i] &amp; <span class="number">1</span>));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Write to the rest of pages&quot;</span>);</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">5</span>; i &lt; num_pages; ++i)</span><br><span class="line">    ((<span class="type">char</span> *)addr)[i * PS] = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">  res = <span class="built_in">mincore</span>(addr, num_pages * PS, vec);</span><br><span class="line">  <span class="built_in">assert</span>(res == <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_pages; ++i)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, (vec[i] &amp; <span class="number">1</span>));</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;After MADV_DONTNEED; non-resident&quot;</span>);</span><br><span class="line">  <span class="built_in">madvise</span>(addr, num_pages * PS, MADV_DONTNEED);</span><br><span class="line"></span><br><span class="line">  res = <span class="built_in">mincore</span>(addr, num_pages * PS, vec);</span><br><span class="line">  <span class="built_in">assert</span>(res == <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_pages; ++i)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, (vec[i] &amp; <span class="number">1</span>));</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Still committed&quot;</span>);</span><br><span class="line">  <span class="built_in">meminfo</span>();</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Uncommiting&quot;</span>);</span><br><span class="line">  <span class="type">void</span>* new_addr = <span class="built_in">mmap</span>(addr, num_pages * PS, PROT_NONE,</span><br><span class="line">                        MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">  <span class="built_in">assert</span>(new_addr == addr);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">meminfo</span>();</span><br><span class="line">  res = <span class="built_in">mincore</span>(addr, num_pages * PS, vec);</span><br><span class="line">  <span class="built_in">assert</span>(res == <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; num_pages; ++i)</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, (vec[i] &amp; <span class="number">1</span>));</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Output on my box:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">Init state</span><br><span class="line">Committed_AS:   29309384 kB</span><br><span class="line"></span><br><span class="line">Reserved 10 4K-pages</span><br><span class="line">Committed_AS:   29309384 kB</span><br><span class="line"></span><br><span class="line">Commit those pages</span><br><span class="line">Committed_AS:   29309424 kB</span><br><span class="line"></span><br><span class="line">Still non-resident</span><br><span class="line">0000000000</span><br><span class="line"></span><br><span class="line">Write to the the first 5 pages</span><br><span class="line">1111100000</span><br><span class="line"></span><br><span class="line">Write to the rest of pages</span><br><span class="line">1111111111</span><br><span class="line"></span><br><span class="line">After MADV_DONTNEED; non-resident</span><br><span class="line">0000000000</span><br><span class="line"></span><br><span class="line">Still committed</span><br><span class="line">Committed_AS:   29309424 kB</span><br><span class="line"></span><br><span class="line">Uncommiting</span><br><span class="line">Committed_AS:   29309384 kB</span><br><span class="line"></span><br><span class="line">0000000000</span><br></pre></td></tr></table></figure>
+<h2 id="Large-Page"><a class="header-anchor" href="#Large-Page">§</a>Large Page</h2>
+<p>One needs to pre-allocate at least one 2M page.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="built_in">echo</span> 1 &gt; <span class="string">&quot;/sys/kernel/mm/hugepages/hugepages-2048kB/nr_hugepages&quot;</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">hugeadm --pool-list</span></span><br><span class="line">      Size  Minimum  Current  Maximum  Default</span><br><span class="line">   2097152        1        1        1        *</span><br><span class="line">1073741824        0        0        0</span><br></pre></td></tr></table></figure>
+<p>The story is the same that physical mem is not used until the first access.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cassert&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdio&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;cstdlib&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> **argv)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">  <span class="type">int</span> res;</span><br><span class="line">  <span class="type">size_t</span> ps_2m = (<span class="number">1</span> &lt;&lt; <span class="number">21</span>);</span><br><span class="line">  <span class="type">size_t</span> PS = (<span class="type">size_t</span>)<span class="built_in">sysconf</span>(_SC_PAGESIZE);</span><br><span class="line"></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">char</span> vec[<span class="number">20</span>];</span><br><span class="line"></span><br><span class="line">  <span class="type">void</span> *addr;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Reserve one huge-page -- HugePages_Rsvd in /proc/meminfo is incremented.</span></span><br><span class="line">  <span class="comment">// By omitting MAP_NORESERVE, we get the guarantee that a successful mmap entails successful writes to the memory.</span></span><br><span class="line">  <span class="comment">// Otherwise, even though the mmap call succeeds, we may get a crash on writing the memory because no huge-page is</span></span><br><span class="line">  <span class="comment">// available.</span></span><br><span class="line">  addr = <span class="built_in">mmap</span>(<span class="literal">nullptr</span>, ps_2m * <span class="number">1</span>,</span><br><span class="line">              PROT_READ|PROT_WRITE,</span><br><span class="line">              MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">              <span class="comment">// MAP_NORESERVE|MAP_PRIVATE|MAP_ANONYMOUS|MAP_HUGETLB, -1, 0);</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (addr == MAP_FAILED) &#123;</span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;mmap&quot;</span>);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// huge-page mem has been pre allocated but not tied to our reserved mem yet</span></span><br><span class="line">  res = <span class="built_in">mincore</span>(addr, <span class="number">10</span> * PS, vec);</span><br><span class="line">  <span class="built_in">assert</span>(res == <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Reserved but no physical mem is used&quot;</span>);</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; ++i) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, (vec[i] &amp; <span class="number">1</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// write to the first byte</span></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;Write to the first 1 byte&quot;</span>);</span><br><span class="line">  ((<span class="type">char</span> *)addr)[<span class="number">0</span>] = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// mapping established; in-core</span></span><br><span class="line">  res = <span class="built_in">mincore</span>(addr, <span class="number">10</span> * PS, vec);</span><br><span class="line">  <span class="built_in">assert</span>(res == <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">10</span>; ++i) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%d&quot;</span>, (vec[i] &amp; <span class="number">1</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Output on my box:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Reserved but no physical mem is used</span><br><span class="line">0000000000</span><br><span class="line"></span><br><span class="line">Write to the first 1 byte</span><br><span class="line">1111111111</span><br></pre></td></tr></table></figure>
+<h2 id="References"><a class="header-anchor" href="#References">§</a>References</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man2/mmap.2.html">https://man7.org/linux/man-pages/man2/mmap.2.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man2/mprotect.2.html">https://man7.org/linux/man-pages/man2/mprotect.2.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man2/madvise.2.html">https://man7.org/linux/man-pages/man2/madvise.2.html</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/errnos/">https://www.chromium.org/chromium-os/developer-library/reference/linux-constants/errnos/</a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

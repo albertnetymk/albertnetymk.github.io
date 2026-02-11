@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Inspecting JVM JIT assembly using Java Microbenchmark Harness (JMH)"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2017/12/27/jmh/"/>
+
+
+<meta name="description" content="§Install by building from the source 123git clone https:&#x2F;&#x2F;github.com&#x2F;openjdk&#x2F;jmh jmhcd jmhmvn clean install -DskipTests §Create new project to use JMH 1234567$ mvn archetype:generate \      -Dinteract">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Inspecting JVM JIT assembly using Java Microbenchmark Harness (JMH)">
+<meta property="og:url" content="https://albertnetymk.github.io/2017/12/27/jmh/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="§Install by building from the source 123git clone https:&#x2F;&#x2F;github.com&#x2F;openjdk&#x2F;jmh jmhcd jmhmvn clean install -DskipTests §Create new project to use JMH 1234567$ mvn archetype:generate \      -Dinteract">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-12-26T23:41:41.000Z">
+<meta property="article:modified_time" content="2024-06-26T08:46:31.065Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Inspecting JVM JIT assembly using Java Microbenchmark Harness (JMH) - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Inspecting JVM JIT assembly using Java Microbenchmark Harness (JMH)
+        
+      </h1>
+
+      <time class="post-time">
+          Dec 27 2017
+      </time>
+    </header>
+
+    <div class="post-content">
+    <h2 id="Install-by-building-from-the-source"><a class="header-anchor" href="#Install-by-building-from-the-source">§</a>Install by building from the source</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git clone https://github.com/openjdk/jmh jmh</span><br><span class="line">cd jmh</span><br><span class="line">mvn clean install -DskipTests</span><br></pre></td></tr></table></figure>
+<h2 id="Create-new-project-to-use-JMH"><a class="header-anchor" href="#Create-new-project-to-use-JMH">§</a>Create new project to use JMH</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">$ mvn archetype:generate \</span><br><span class="line">      -DinteractiveMode=false \</span><br><span class="line">      -DarchetypeGroupId=org.openjdk.jmh \</span><br><span class="line">      -DarchetypeArtifactId=jmh-java-benchmark-archetype \</span><br><span class="line">      -DgroupId=org.sample \</span><br><span class="line">      -DartifactId=my-jmh-test \</span><br><span class="line">      -Dversion=1.0</span><br></pre></td></tr></table></figure>
+<p>Modify <code>MyBenchmark.java</code> so that it looks something like:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> org.sample;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> org.openjdk.jmh.annotations.*;</span><br><span class="line"><span class="keyword">import</span> org.openjdk.jmh.runner.Runner;</span><br><span class="line"><span class="keyword">import</span> org.openjdk.jmh.runner.RunnerException;</span><br><span class="line"><span class="keyword">import</span> org.openjdk.jmh.runner.options.Options;</span><br><span class="line"><span class="keyword">import</span> org.openjdk.jmh.runner.options.OptionsBuilder;</span><br><span class="line"><span class="keyword">import</span> org.openjdk.jmh.infra.Blackhole;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MyBenchmark</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@State(Scope.Thread)</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">MyState</span> &#123;</span><br><span class="line">        <span class="keyword">public</span> <span class="type">int</span>[] arr = <span class="keyword">new</span> <span class="title class_">int</span>[<span class="number">2</span>];</span><br><span class="line">        <span class="keyword">public</span> <span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="keyword">public</span> <span class="type">int</span> <span class="title function_">testMethod</span><span class="params">(MyState s)</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> s.arr[s.i+<span class="number">1</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> RunnerException &#123;</span><br><span class="line">        <span class="type">Options</span> <span class="variable">opt</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">OptionsBuilder</span>()</span><br><span class="line">                .include(MyBenchmark.class.getSimpleName())</span><br><span class="line">                .warmupIterations(<span class="number">1</span>)</span><br><span class="line">                .measurementIterations(<span class="number">1</span>)</span><br><span class="line">                .forks(<span class="number">1</span>)</span><br><span class="line">                .build();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">new</span> <span class="title class_">Runner</span>(opt).run();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Run it using:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mvn package &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">  java -Xcomp \</span></span><br><span class="line"><span class="language-bash">  -XX:+UnlockDiagnosticVMOptions \</span></span><br><span class="line"><span class="language-bash">  -XX:CompileCommand=<span class="string">&#x27;print,*.testMethod&#x27;</span> \</span></span><br><span class="line"><span class="language-bash">  -<span class="built_in">cp</span> target/benchmarks.jar:target/my-jmh-test-1.0.jar \</span></span><br><span class="line"><span class="language-bash">  org.sample.MyBenchmark  &gt; tmp.asm</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># or</span></span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">mvn package &amp;&amp; \</span></span><br><span class="line"><span class="language-bash">  java -Xcomp \</span></span><br><span class="line"><span class="language-bash">  -XX:+UnlockDiagnosticVMOptions \</span></span><br><span class="line"><span class="language-bash">  -XX:CompileCommand=<span class="string">&#x27;print,*.testMethod&#x27;</span> \</span></span><br><span class="line"><span class="language-bash">  -jar target/benchmarks.jar -wi 5 -i 1 -f 1 &gt; tmp.asm</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash"><span class="comment"># five warmup, one iteratino, one fork; see `java -jar target/benchmark.jar -h` for complete list of accepted options</span></span></span><br></pre></td></tr></table></figure>
+<p>The corresponding assembly looks like:</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">0x00007f15119a0c18</span>: <span class="keyword">mov</span>     <span class="number">0x10</span>(%rdx),%eax   <span class="comment">; implicit exception: dispatches to 0x00007f15119a0c54</span></span><br><span class="line"><span class="number">0x00007f15119a0c1b</span>: <span class="keyword">shl</span>     <span class="number">$0</span>x3,%rax         <span class="comment">;*getfield arr</span></span><br><span class="line">                                              <span class="comment">; - org.sample.MyBenchmark::testMethod@1 (line 51)</span></span><br><span class="line"></span><br><span class="line"><span class="number">0x00007f15119a0c1f</span>: <span class="keyword">mov</span>     <span class="number">0xc</span>(%rdx),%esi    <span class="comment">;*getfield i</span></span><br><span class="line">                                              <span class="comment">; - org.sample.MyBenchmark::testMethod@5 (line 51)</span></span><br><span class="line"></span><br><span class="line"><span class="number">0x00007f15119a0c22</span>: incl    %esi</span><br><span class="line"><span class="number">0x00007f15119a0c24</span>: <span class="keyword">movsxd</span>  %esi,%rdi</span><br><span class="line"><span class="number">0x00007f15119a0c27</span>: <span class="keyword">cmp</span>     <span class="number">0xc</span>(%rax),%esi    <span class="comment">; implicit exception: dispatches to 0x00007f15119a0c59</span></span><br><span class="line"><span class="number">0x00007f15119a0c2a</span>: <span class="keyword">jnb</span>     <span class="number">0x7f15119a0c63</span></span><br><span class="line"><span class="number">0x00007f15119a0c30</span>: <span class="keyword">mov</span>     <span class="number">0x10</span>(%rax,%rdi,<span class="number">4</span>),%eax  <span class="comment">;*iaload</span></span><br><span class="line">                                              <span class="comment">; - org.sample.MyBenchmark::testMethod@10 (line 51)</span></span><br></pre></td></tr></table></figure>
+<p>The <code>jnb</code> instruction is for array bounds check, because array size info is located at <code>0xc</code> offset of the base pointer.</p>
+<h2 id="Reference"><a class="header-anchor" href="#Reference">§</a>Reference</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://openjdk.java.net/projects/code-tools/jmh/">http://openjdk.java.net/projects/code-tools/jmh/</a></li>
+<li><a target="_blank" rel="noopener" href="https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html">https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html</a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

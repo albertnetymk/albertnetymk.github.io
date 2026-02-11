@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Producing Plots for Papers using Octave"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2020/04/21/octave_plot/"/>
+
+
+<meta name="description" content="Since I really like the SIMD-way of manipulating data in Octave, all my data processing&#x2F;visualization is done in it. In order to obtain high quality plots (for conference papers), I generate all plots">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Producing Plots for Papers using Octave">
+<meta property="og:url" content="https://albertnetymk.github.io/2020/04/21/octave_plot/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Since I really like the SIMD-way of manipulating data in Octave, all my data processing&#x2F;visualization is done in it. In order to obtain high quality plots (for conference papers), I generate all plots">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-04-21T11:11:19.000Z">
+<meta property="article:modified_time" content="2023-10-28T19:22:33.660Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Producing Plots for Papers using Octave - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Producing Plots for Papers using Octave
+        
+      </h1>
+
+      <time class="post-time">
+          Apr 21 2020
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Since I really like the SIMD-way of manipulating data in Octave, all my data processing/visualization is done in it. In order to obtain high quality
+plots (for conference papers), I generate all plots in PDF format. Unfortunately, the default way of saving plots in PDF has a few caveats, which make
+them hard to be used in a paper directly. Therefore, I am sharing my experience on how to save plots in PDF format that can be used in a conference
+paper easily. There are mainly two problems, plot dimension and embedding fonts.</p>
+<h2 id="Plot-Dimension"><a class="header-anchor" href="#Plot-Dimension">§</a>Plot Dimension</h2>
+<p>The following two commands fit the paper to the plot instead of the default A4 size, which makes it hard to include in a paper due to the surrounding
+excessive blank space.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">set(gcf, &#x27;PaperPosition&#x27;, [0 0 8 6]);</span><br><span class="line">set(gcf, &#x27;PaperSize&#x27;, [8 6]);</span><br><span class="line">% or one can specify -dpdfcairo in print, but this one might not be available in old octave releases</span><br></pre></td></tr></table></figure>
+<h2 id="Embedding-Fonts"><a class="header-anchor" href="#Embedding-Fonts">§</a>Embedding Fonts</h2>
+<p>Conferences often require all fonts used to be embedded in the final submission. <code>octave</code> uses Helvetica for plotting by default, but it’s usually not
+available on Linux. One can use <code>pdffonts</code> to check what fonts are used in a pdf and whether a certain font is embedded or not.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">pdffonts test.pdf</span></span><br><span class="line">name                                 type              encoding         emb sub uni object ID</span><br><span class="line">------------------------------------ ----------------- ---------------- --- --- --- ---------</span><br><span class="line">Helvetica                            Type 1            Standard         no  no  no       7  0</span><br><span class="line">LDKUJD+:Bold                         Type 1C           WinAnsi          yes yes no       8  0</span><br></pre></td></tr></table></figure>
+<p>When a font is <em>not</em> embedded, and it’s missing on the platform it’s viewed, a substitute font will be used. On my box, “Nimbus Sans” is used.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">pdffonts -subst test.pdf</span></span><br><span class="line">name                                 object ID substitute font                      substitute font file</span><br><span class="line">------------------------------------ --------- ------------------------------------ ------------------------------------</span><br><span class="line">Helvetica                                 7  0 NimbusSans-Regular                   /usr/share/fonts/opentype/urw-base35/NimbusSans-Regular.otf</span><br></pre></td></tr></table></figure>
+<p>Instead of relying on the substitution, I can change the default font to something that’s available on my box so that
+all fonts in the pdf are embedded. One can set the default font as shown below, but in order for it to take effect, the
+<code>Cairo</code> renderer must be used. IOW, use <code>-dpdfcairo</code> instead of <code>-dpdf</code>. Another good font is “FreeSans”.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">set (0, &quot;defaultaxesfontname&quot;, &quot;NimbusSans&quot;)</span><br><span class="line">set (0, &quot;defaulttextfontname&quot;, &quot;NimbusSans&quot;)</span><br></pre></td></tr></table></figure>
+<h2 id="Complete-program"><a class="header-anchor" href="#Complete-program">§</a>Complete program</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">graphics_toolkit(&#x27;gnuplot&#x27;);</span><br><span class="line">setenv GNUTERM dumb</span><br><span class="line"></span><br><span class="line">set (0, &quot;defaultaxesfontsize&quot;, 10)</span><br><span class="line">set (0, &quot;defaulttextfontsize&quot;, 10)</span><br><span class="line"></span><br><span class="line">set (0, &quot;defaultaxesfontname&quot;, &quot;NimbusSans&quot;)</span><br><span class="line">set (0, &quot;defaulttextfontname&quot;, &quot;NimbusSans&quot;)</span><br><span class="line"></span><br><span class="line">figure(&#x27;visible&#x27;, &#x27;off&#x27;)</span><br><span class="line">plot(1:10)</span><br><span class="line">title(&#x27;test&#x27;)</span><br><span class="line">xlabel(&#x27;x&#x27;)</span><br><span class="line">ylabel(&#x27;y&#x27;)</span><br><span class="line"></span><br><span class="line">print(1, &quot;test.pdf&quot;, &#x27;-dpdfcairo&#x27;)</span><br></pre></td></tr></table></figure>
+<p>Running it using the following command so that it does not require X.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ xvfb-run -a octave -q --no-gui tmp.m</span><br></pre></td></tr></table></figure>
+<h2 id="Bonus-normalize-the-PDF"><a class="header-anchor" href="#Bonus-normalize-the-PDF">§</a>Bonus: normalize the PDF</h2>
+<p>If the generated PDFs are checked into the repo (for archive/sharing purpose), it’s better to strip the meta data firstly. The following commands are
+inspired from <a target="_blank" rel="noopener" href="https://gist.github.com/hubgit/6078384">https://gist.github.com/hubgit/6078384</a></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">exiftool -overwrite_original -all:all=&quot;&quot; test.pdf &amp;&gt; /dev/null</span><br><span class="line">qpdf --linearize --replace-input test.pdf</span><br><span class="line">perl -i -pe &#x27;s!trailer &lt;&lt;.*!!&#x27; test.pdf # this is for removing the trailing ID; seems working fine for PDFs from Octave, but not sure about others</span><br><span class="line">md5sum test.pdf</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

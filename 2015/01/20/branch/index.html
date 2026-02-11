@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Clean Git Commit History"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2015/01/20/branch/"/>
+
+
+<meta name="description" content="§Setup Say we have three branches:  master        : the one whole team collaborate on feature-a     : merging candidate for this feature feature-a-dev : daily development for this feature; might conta">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Clean Git Commit History">
+<meta property="og:url" content="https://albertnetymk.github.io/2015/01/20/branch/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="§Setup Say we have three branches:  master        : the one whole team collaborate on feature-a     : merging candidate for this feature feature-a-dev : daily development for this feature; might conta">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-01-20T15:05:38.000Z">
+<meta property="article:modified_time" content="2022-12-28T18:14:50.701Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Clean Git Commit History - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Clean Git Commit History
+        
+      </h1>
+
+      <time class="post-time">
+          Jan 20 2015
+      </time>
+    </header>
+
+    <div class="post-content">
+    <h2 id="Setup"><a class="header-anchor" href="#Setup">§</a>Setup</h2>
+<p>Say we have three branches:</p>
+<ul>
+<li>master        : the one whole team collaborate on</li>
+<li>feature-a     : merging candidate for this feature</li>
+<li>feature-a-dev : daily development for this feature; might contain a lot errors in the commits as the developers learn
+more on this area</li>
+</ul>
+<h2 id="Routine"><a class="header-anchor" href="#Routine">§</a>Routine</h2>
+<h3 id="master-feature-a"><a class="header-anchor" href="#master-feature-a">§</a>master &gt;&gt; feature-a</h3>
+<p><code>feature-a</code> is rebased onto <code>master</code> to pick up all the changes done by other members in the team.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git rebase master feature-a # hopefully, there&#x27;s only small conflicts, if any</span><br></pre></td></tr></table></figure>
+<h3 id="feature-a-dev-feature-a"><a class="header-anchor" href="#feature-a-dev-feature-a">§</a>feature-a-dev &gt;&gt; feature-a</h3>
+<p>Create one commit on <code>feature-a</code>to capture the changes in <code>feature-a-dev</code> whenever it reaches one milestone.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">git checkout feature-a</span><br><span class="line">git merge --squash feature-a-dev</span><br><span class="line"><span class="meta prompt_"># </span><span class="language-bash">fix conflicts <span class="keyword">if</span> any</span></span><br><span class="line">git commit</span><br></pre></td></tr></table></figure>
+<h3 id="feature-a-master"><a class="header-anchor" href="#feature-a-master">§</a>feature-a &gt;&gt; master</h3>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git checkout master</span><br><span class="line">git merge [--no-ff] feature-a</span><br></pre></td></tr></table></figure>
+<h2 id="Conclusion"><a class="header-anchor" href="#Conclusion">§</a>Conclusion</h2>
+<p>Following the above practice, hopefully, you could make sure master always has clean and informative history.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

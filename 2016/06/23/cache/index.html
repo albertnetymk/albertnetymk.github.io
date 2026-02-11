@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Observe Cache Effect Using C"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2016/06/23/cache/"/>
+
+
+<meta name="description" content="This post is pretty good read on cache effect. Even though C# is used in that article, the author claims that language choice has little effect on the conclusion. Since I don’t have access to C# compi">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Observe Cache Effect Using C">
+<meta property="og:url" content="https://albertnetymk.github.io/2016/06/23/cache/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="This post is pretty good read on cache effect. Even though C# is used in that article, the author claims that language choice has little effect on the conclusion. Since I don’t have access to C# compi">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-06-22T22:12:57.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.939Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Observe Cache Effect Using C - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Observe Cache Effect Using C
+        
+      </h1>
+
+      <time class="post-time">
+          Jun 23 2016
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>This <a target="_blank" rel="noopener" href="http://igoro.com/archive/gallery-of-processor-cache-effects/">post</a> is pretty good read on cache effect. Even though C# is used in that article,
+the author claims that language choice has little effect on the conclusion. Since I don’t have access to C# compilers on my Linux box, I converted the
+examples to C to reproduce it. Surprisingly, the result is not 100% consistent with his observation.</p>
+<p>There are seven examples in the original post, but <code>ex1</code> is just a special case of <code>ex2</code>, so I would only discuss <code>ex[2..7]</code>.</p>
+<h2 id="ex2"><a class="header-anchor" href="#ex2">§</a>ex2</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">$ clang -O test.c -lpthread ; ./a.out</span><br><span class="line">== ex2 ==</span><br><span class="line">step is 1: Elapsed time: 0.044202 seconds</span><br><span class="line">step is 2: Elapsed time: 0.041431 seconds</span><br><span class="line">step is 4: Elapsed time: 0.040507 seconds</span><br><span class="line">step is 8: Elapsed time: 0.040617 seconds</span><br><span class="line">step is 16: Elapsed time: 0.041350 seconds</span><br><span class="line">step is 32: Elapsed time: 0.026930 seconds</span><br><span class="line">step is 64: Elapsed time: 0.016239 seconds</span><br><span class="line">step is 128: Elapsed time: 0.006211 seconds</span><br><span class="line">step is 256: Elapsed time: 0.003147 seconds</span><br><span class="line">step is 512: Elapsed time: 0.001748 seconds</span><br></pre></td></tr></table></figure>
+<p>For step in <code>[1..16]</code>, the access is within the cache line, so exec time is not much different. Starting from <code>32</code>, the number of cache lines used
+drops by half compared with next step size, which accounts for the diminishing of exec time.</p>
+<h2 id="ex3"><a class="header-anchor" href="#ex3">§</a>ex3</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">$ clang -O test.c -lpthread ; ./a.out</span><br><span class="line">== ex3 ==</span><br><span class="line">size is 1K: Elapsed time: 0.225452 seconds</span><br><span class="line">size is 2K: Elapsed time: 0.224542 seconds</span><br><span class="line">size is 4K: Elapsed time: 0.231378 seconds</span><br><span class="line">size is 8K: Elapsed time: 0.219132 seconds</span><br><span class="line">size is 16K: Elapsed time: 0.222465 seconds</span><br><span class="line">size is 32K: Elapsed time: 0.219828 seconds</span><br><span class="line">size is 64K: Elapsed time: 0.219956 seconds</span><br><span class="line">size is 128K: Elapsed time: 0.218648 seconds</span><br><span class="line">size is 256K: Elapsed time: 0.252090 seconds</span><br><span class="line">size is 512K: Elapsed time: 0.228325 seconds</span><br><span class="line">size is 1024K: Elapsed time: 0.272825 seconds</span><br><span class="line">size is 2048K: Elapsed time: 0.473781 seconds</span><br><span class="line">size is 4096K: Elapsed time: 0.547629 seconds</span><br><span class="line">size is 8192K: Elapsed time: 0.605537 seconds</span><br><span class="line">size is 16384K: Elapsed time: 0.625167 seconds</span><br><span class="line">size is 32768K: Elapsed time: 0.663107 seconds</span><br></pre></td></tr></table></figure>
+<p>The caches on my box have the following size, and I have to say the pattern is not very obvious to me.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">L1d: 32K</span><br><span class="line">L2: 256K</span><br><span class="line">L3: 4096K</span><br></pre></td></tr></table></figure>
+<h2 id="ex4"><a class="header-anchor" href="#ex4">§</a>ex4</h2>
+<p>EDIT: Need to use <code>(*3)</code> instead of <code>++</code> due to heavy optimization of <code>clang</code>.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ clang test.c -lpthread; ./a.out</span><br><span class="line">== ex4 ==</span><br><span class="line">Elapsed time: 0.360638 seconds</span><br><span class="line">Elapsed time: 0.176043 seconds</span><br><span class="line">Elapsed time: 0.175649 seconds</span><br><span class="line">Elapsed time: 0.351160 seconds</span><br></pre></td></tr></table></figure>
+<p>I could see the data dependency effect only if I don’t turn on optimization, as shown above.</p>
+<p>Once the optimization is turned on, the result is totally different:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ clang -O test.c -lpthread; ./a.out</span><br><span class="line">== ex4 ==</span><br><span class="line">Elapsed time: 0.003489 seconds</span><br><span class="line">Elapsed time: 0.011261 seconds</span><br><span class="line">Elapsed time: 0.008456 seconds</span><br><span class="line">Elapsed time: 0.006193 seconds</span><br></pre></td></tr></table></figure>
+<p>The second case is <code>~3x</code> slower, which I believe is a [bug]<a target="_blank" rel="noopener" href="https://llvm.org/bugs/show_bug.cgi?id=28128()">https://llvm.org/bugs/show_bug.cgi?id=28128()</a> in auto-vectorizatoin of clang. The third and
+forth case are <code>~2x</code> slower, because the consecutive multiplication in the first case could be collapsed into one, while infeasible for latter cases.</p>
+<h2 id="ex5"><a class="header-anchor" href="#ex5">§</a>ex5</h2>
+<p>Similar result on my box, even though only using <code>4M</code> array.</p>
+<p>Cache associativity could be obtained using techniques shown at <a target="_blank" rel="noopener" href="https://ferdinand-muetsch.de/ubuntu-cache-information-bash-script/">https://ferdinand-muetsch.de/ubuntu-cache-information-bash-script/</a> on Linux systems.</p>
+<h2 id="ex6"><a class="header-anchor" href="#ex6">§</a>ex6</h2>
+<p>Similar results:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ clang -O test.c -lpthread; ./a.out</span><br><span class="line">== ex6 ==</span><br><span class="line">Elapsed time: 0.000223 seconds</span><br><span class="line">Elapsed time: 0.000050 seconds</span><br></pre></td></tr></table></figure>
+<h2 id="ex7"><a class="header-anchor" href="#ex7">§</a>ex7</h2>
+<p>No weird result any more.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$ clang -O test.c -lpthread; ./a.out</span><br><span class="line">== ex7 ==</span><br><span class="line">Elapsed time: 0.026791 seconds</span><br><span class="line">Elapsed time: 0.025850 seconds</span><br><span class="line">Elapsed time: 0.011034 seconds</span><br></pre></td></tr></table></figure>
+<h2 id="Code"><a class="header-anchor" href="#Code">§</a>Code</h2>
+<p>The complete source code:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;assert.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">tik</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">clock_t</span> start, end;</span><br><span class="line">    <span class="type">static</span> <span class="type">int</span> flag = <span class="number">0</span>;</span><br><span class="line">    <span class="type">static</span> <span class="type">double</span> elapsed_time;</span><br><span class="line">    <span class="keyword">if</span> (flag == <span class="number">0</span>) &#123;</span><br><span class="line">        start = clock();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        end = clock();</span><br><span class="line">        elapsed_time = (<span class="type">double</span>)(end - start) / (<span class="type">double</span>)CLOCKS_PER_SEC;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;Elapsed time: %f seconds\n&quot;</span>, elapsed_time);</span><br><span class="line">    &#125;</span><br><span class="line">    flag = <span class="number">1</span> - flag;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="type">unsigned</span> <span class="type">int</span> uint;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">const</span> uint arr_len = <span class="number">64</span> * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line"><span class="type">static</span> uint i_max = <span class="number">64</span> * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line"><span class="type">static</span> uint arr[arr_len];</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> uint s_counter[<span class="number">1024</span>];</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> uint A, B, C, D, E, F, G;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ex2</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;== ex2 ==&quot;</span>);</span><br><span class="line">    <span class="comment">// warm up cache</span></span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; arr_len; i += <span class="number">1</span>) &#123;</span><br><span class="line">        arr[i] *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    uint step_max = <span class="number">1024</span>;</span><br><span class="line">    <span class="keyword">for</span> (uint step = <span class="number">1</span>; step &lt; step_max; step *= <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;step is %u: &quot;</span>, step);</span><br><span class="line">        tik();</span><br><span class="line">        <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; arr_len; i += step) &#123;</span><br><span class="line">            arr[i] *= <span class="number">3</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        tik();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ex3</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;== ex3 ==&quot;</span>);</span><br><span class="line">    uint llc_size = <span class="number">64</span> * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line">    <span class="keyword">for</span> (uint size = <span class="number">1024</span>; size &lt; llc_size; size *= <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="built_in">printf</span>(<span class="string">&quot;size is %uK: &quot;</span>, size/<span class="number">1024</span>);</span><br><span class="line">        tik();</span><br><span class="line">        <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">            arr[ (i*<span class="number">16</span>) % size ] *= <span class="number">3</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        tik();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ex4</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;== ex4 ==&quot;</span>);</span><br><span class="line">    <span class="type">static</span> uint acc[<span class="number">2</span>] = &#123;<span class="number">1</span>, <span class="number">1</span>&#125;;</span><br><span class="line">    tik();</span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        acc[<span class="number">0</span>] *= <span class="number">3</span>;</span><br><span class="line">        acc[<span class="number">0</span>] *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">    acc[<span class="number">0</span>] = acc[<span class="number">1</span>] = <span class="number">1</span>;</span><br><span class="line">    tik();</span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        acc[<span class="number">0</span>] *= <span class="number">3</span>;</span><br><span class="line">        acc[<span class="number">1</span>] *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">    acc[<span class="number">0</span>] = acc[<span class="number">1</span>] = <span class="number">1</span>;</span><br><span class="line">    tik();</span><br><span class="line"><span class="meta">#<span class="keyword">pragma</span> clang loop vectorize(disable)</span></span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        acc[<span class="number">0</span>] *= <span class="number">3</span>;</span><br><span class="line">        acc[<span class="number">1</span>] *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">    acc[<span class="number">0</span>] = acc[<span class="number">1</span>] = <span class="number">1</span>;</span><br><span class="line">    tik();</span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        acc[<span class="number">0</span>] *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        acc[<span class="number">1</span>] *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ex5</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> uint arr_len = <span class="number">4</span>*<span class="number">1024</span>*<span class="number">1024</span>;</span><br><span class="line">    <span class="type">static</span> <span class="type">unsigned</span> <span class="type">char</span> arr[arr_len];</span><br><span class="line">    <span class="keyword">for</span> (uint K = <span class="number">1</span>; K &lt;= <span class="number">512</span>; ++K) &#123;</span><br><span class="line">        tik();</span><br><span class="line">        uint p = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">            arr[p]++;</span><br><span class="line">            p += K;</span><br><span class="line">            <span class="keyword">if</span> (p &gt;= arr_len) &#123; p = <span class="number">0</span>; &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        tik();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">inc_counter</span><span class="params">(uint p)</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        s_counter[p] += <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ex6</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;== ex6 ==&quot;</span>);</span><br><span class="line">    <span class="type">static</span> <span class="type">const</span> <span class="type">uintptr_t</span> n_threads = <span class="number">4</span>;</span><br><span class="line">    <span class="type">pthread_t</span> tasks[n_threads];</span><br><span class="line">    tik();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">uintptr_t</span> i = <span class="number">0</span>; i &lt; n_threads; ++i) &#123;</span><br><span class="line">        pthread_create(&amp;tasks[i], <span class="literal">NULL</span>, (<span class="type">void</span>*)&amp;inc_counter, (<span class="type">void</span>*)i);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">uintptr_t</span> i = <span class="number">0</span>; i &lt; n_threads; ++i) &#123;</span><br><span class="line">        pthread_join(tasks[i], <span class="literal">NULL</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">    tik();</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">uintptr_t</span> i = <span class="number">0</span>; i &lt; n_threads; ++i) &#123;</span><br><span class="line">        pthread_create(&amp;tasks[i], <span class="literal">NULL</span>, (<span class="type">void</span>*)&amp;inc_counter, (<span class="type">void</span>*)(<span class="number">16</span>+i*<span class="number">16</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">uintptr_t</span> i = <span class="number">0</span>; i &lt; n_threads; ++i) &#123;</span><br><span class="line">        pthread_join(tasks[i], <span class="literal">NULL</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">ex7</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">puts</span>(<span class="string">&quot;== ex7 ==&quot;</span>);</span><br><span class="line">    A = B = C = D = E = F = G = <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    tik();</span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        A *= <span class="number">3</span>;</span><br><span class="line">        B *= <span class="number">3</span>;</span><br><span class="line">        C *= <span class="number">3</span>;</span><br><span class="line">        D *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">    tik();</span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        A *= <span class="number">3</span>;</span><br><span class="line">        C *= <span class="number">3</span>;</span><br><span class="line">        E *= <span class="number">3</span>;</span><br><span class="line">        G *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">    tik();</span><br><span class="line">    <span class="keyword">for</span> (uint i = <span class="number">0</span>; i &lt; i_max; ++i) &#123;</span><br><span class="line">        A *= <span class="number">3</span>;</span><br><span class="line">        C *= <span class="number">3</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    tik();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span> <span class="params">(<span class="type">int</span> argc, <span class="type">char</span>** argv)</span> &#123;</span><br><span class="line">    ex2();</span><br><span class="line">    ex3();</span><br><span class="line">    ex4();</span><br><span class="line">    ex5();</span><br><span class="line">    ex6();</span><br><span class="line">    ex7();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

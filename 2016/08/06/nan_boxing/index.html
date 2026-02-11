@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="NaN Boxing"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2016/08/06/nan_boxing/"/>
+
+
+<meta name="description" content="According to IEEE floating point definition, double uses the following encoding (assuming 64 bits): 1 sign bit + 11 exponent bits + 52 mantissa  Some interesting special values are: 1234* INF: 0 &amp;#123">
+<meta property="og:type" content="article">
+<meta property="og:title" content="NaN Boxing">
+<meta property="og:url" content="https://albertnetymk.github.io/2016/08/06/nan_boxing/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="According to IEEE floating point definition, double uses the following encoding (assuming 64 bits): 1 sign bit + 11 exponent bits + 52 mantissa  Some interesting special values are: 1234* INF: 0 &amp;#123">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-08-05T23:36:04.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.939Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> NaN Boxing - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          NaN Boxing
+        
+      </h1>
+
+      <time class="post-time">
+          Aug 6 2016
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>According to <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/IEEE_floating_point">IEEE floating point definition</a>, <code>double</code> uses the following encoding (assuming 64
+bits):</p>
+<pre><code>1 sign bit + 11 exponent bits + 52 mantissa
+</code></pre>
+<p>Some interesting special values are:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">* INF: 0 &#123;1&#125;*11 &#123;0&#125;*52 // positive sign, set exp and unset mantissa</span><br><span class="line">* -INF: 1 &#123;1&#125;*11 &#123;0&#125;*52 // negative sign, set exp and unset mantissa</span><br><span class="line">* Quiet NaN: _ &#123;1&#125;*11 1 &#123;_&#125;*51 // any sign, set exp and one bit after exp, and the rest bits are free</span><br><span class="line">* Singal NaN: _ &#123;1&#125;*11 0 [^&#123;0&#125;*51] // any sign, set exp, and the bit after expo is unset, and the rest bits contains at least one bit set</span><br></pre></td></tr></table></figure>
+<p>Because there are 51 free bits in NaN case, we can embed additional info inside it, hence the name NaN boxing.</p>
+<p>The code is more or less converted from the C++ code snippet at
+<a target="_blank" rel="noopener" href="https://nikic.github.io/2012/02/02/Pointer-magic-for-efficient-dynamic-value-representations.html">https://nikic.github.io/2012/02/02/Pointer-magic-for-efficient-dynamic-value-representations.html</a>, with the different treatment on handling <code>nan</code>. On
+my box (ubuntu 14.04 using clang 3.8), <code>sqrt(-1)</code> produces <code>-nan</code>, and it’s considered as a double.</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;math.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdbool.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;assert.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="comment">// #include &lt;limits.h&gt;</span></span><br><span class="line"><span class="comment">// #include &lt;string.h&gt;</span></span><br><span class="line"><span class="comment">// #include &quot;./tik.h&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">union</span> &#123;</span></span><br><span class="line">  <span class="comment">// sign bits: 1</span></span><br><span class="line">  <span class="comment">// exponent bits: 11</span></span><br><span class="line">  <span class="comment">// quiet/signal bits: 1</span></span><br><span class="line">  <span class="comment">// significand bits: 51</span></span><br><span class="line">  <span class="type">double</span> as_double;</span><br><span class="line">  <span class="type">uint64_t</span> bits;</span><br><span class="line">  <span class="type">int32_t</span> as_int32;</span><br><span class="line">&#125; <span class="type">value_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="type">uint64_t</span> max_double = <span class="number">0xFFF8</span>ULL &lt;&lt; <span class="number">48</span>;</span><br><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="type">uint64_t</span> ptr_mask   = <span class="number">0xFFF9</span>ULL &lt;&lt; <span class="number">48</span>;</span><br><span class="line"><span class="type">static</span> <span class="type">const</span> <span class="type">uint64_t</span> int_mask   = <span class="number">0xFFFA</span>ULL &lt;&lt; <span class="number">48</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">is_neg_zero</span><span class="params">(<span class="type">double</span> x)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">return</span> (<span class="type">int</span>)x == <span class="number">0</span> &amp;&amp; (*(<span class="type">uint64_t</span>*)&amp;x &gt;&gt; <span class="number">63</span>) == <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">value_t</span> <span class="title function_">from_double</span><span class="params">(<span class="type">double</span> x)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">value_t</span> v;</span><br><span class="line">  <span class="keyword">if</span> (x == (<span class="type">int32_t</span>)x &amp;&amp; !is_neg_zero(x)) &#123;</span><br><span class="line">    v.bits = (<span class="type">unsigned</span> <span class="type">long</span>) (<span class="type">int32_t</span>)x | int_mask;</span><br><span class="line">    <span class="keyword">return</span> v;</span><br><span class="line">  &#125;</span><br><span class="line">  v.as_double = x;</span><br><span class="line">  <span class="keyword">return</span> v;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">value_t</span> <span class="title function_">from_ptr</span><span class="params">(<span class="type">void</span> *p)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">uintptr_t</span> p_i = (<span class="type">uintptr_t</span>) p;</span><br><span class="line">  assert((p_i &amp; ptr_mask) == <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">return</span> (<span class="type">value_t</span>) &#123; .bits = p_i | ptr_mask &#125;;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">is_double</span><span class="params">(<span class="type">value_t</span> v)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">return</span> v.bits &lt;= max_double;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">is_ptr</span><span class="params">(<span class="type">value_t</span> v)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">return</span> (v.bits &amp; ptr_mask) == ptr_mask;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">bool</span> <span class="title function_">is_int32</span><span class="params">(<span class="type">value_t</span> v)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">return</span> (v.bits &amp; int_mask) == int_mask;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span> <span class="title function_">test</span><span class="params">(<span class="type">value_t</span> v)</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="keyword">if</span> (is_int32(v)) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;v is int: %d\n&quot;</span>, v.as_int32);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (is_double(v)) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;v is double: %lf\n&quot;</span>, v.as_double);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (is_ptr(v)) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;v is ptr: %p\n&quot;</span>, (<span class="type">void</span>*) (v.bits &amp; ~ptr_mask));</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">puts</span>(<span class="string">&quot;IMPOSSIBLE&quot;</span>);</span><br><span class="line">  assert(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">value_t</span> v;</span><br><span class="line">  v = from_double(<span class="number">0.3</span>);</span><br><span class="line">  test(v);</span><br><span class="line">  v = from_double(<span class="number">3</span>);</span><br><span class="line">  test(v);</span><br><span class="line">  v = from_ptr(<span class="built_in">malloc</span>(<span class="number">1</span>));</span><br><span class="line">  test(v);</span><br><span class="line">  v = from_double(<span class="number">1.0</span>/<span class="number">0</span>);</span><br><span class="line">  test(v);</span><br><span class="line">  v = from_double(<span class="built_in">sqrt</span>(<span class="number">-1</span>));</span><br><span class="line">  test(v);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">v is double: 0.300000</span><br><span class="line">v is int: 3</span><br><span class="line">v is ptr: 0x1d77010</span><br><span class="line">v is double: inf</span><br><span class="line">v is double: -nan</span><br></pre></td></tr></table></figure>
+<h2 id="Reference"><a class="header-anchor" href="#Reference">§</a>Reference</h2>
+<p><a target="_blank" rel="noopener" href="https://www.doc.ic.ac.uk/~eedwards/compsys/float/nan.html">https://www.doc.ic.ac.uk/~eedwards/compsys/float/nan.html</a></p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

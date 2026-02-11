@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="My notes on Functor, Applicative and Monad"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2015/07/02/functor/"/>
+
+
+<meta name="description" content="§Functor This post provides vivid explanation for Functors in Haskell. However, I still find it confusing why we have functors in Haskell. In order to really understand functors, we must explore the o">
+<meta property="og:type" content="article">
+<meta property="og:title" content="My notes on Functor, Applicative and Monad">
+<meta property="og:url" content="https://albertnetymk.github.io/2015/07/02/functor/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="§Functor This post provides vivid explanation for Functors in Haskell. However, I still find it confusing why we have functors in Haskell. In order to really understand functors, we must explore the o">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-07-01T23:26:26.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.939Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> My notes on Functor, Applicative and Monad - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          My notes on Functor, Applicative and Monad
+        
+      </h1>
+
+      <time class="post-time">
+          Jul 2 2015
+      </time>
+    </header>
+
+    <div class="post-content">
+    <h2 id="Functor"><a class="header-anchor" href="#Functor">§</a>Functor</h2>
+<p>This <a target="_blank" rel="noopener" href="http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html">post</a> provides vivid explanation for Functors in Haskell.
+However, I still find it confusing why we have functors in Haskell.</p>
+<p>In order to really understand functors, we must explore the origin of this concept. According to <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Functor">wikipedia</a>,
+“a functor is a type of mapping between categories”, but “mapping” relation isn’t very obvious to me.</p>
+<p>The signature of <code>fmap</code> is:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fmap :: (a-&gt;b) -&gt; f a -&gt; f b</span><br></pre></td></tr></table></figure>
+<p>If we rewrite it to be (the parentheses was implicit before):</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fmap :: (a-&gt;b) -&gt; (f a -&gt; f b)</span><br></pre></td></tr></table></figure>
+<p>we could interpret that <code>fmap</code> takes one argument, one function with type <code>a-&gt;b</code>, and convert it into another function on new types (new domain), <code>f a -&gt; f b</code>. Now the “mapping” referred in the definition becomes explicit.</p>
+<p>Intuitively, I understand types in <code>Functor</code> class as containers, that could hold some value.</p>
+<h2 id="Monad"><a class="header-anchor" href="#Monad">§</a>Monad</h2>
+<p>All monads in Haskell are type constructors, but not all type constructors are monads. As we will see, monads have to be type constructors for which
+specific operations are defined and for which specific “monad laws” hold.</p>
+<p><code>return</code> and <code>&gt;&gt;=</code> (bind) are the two passages connecting the pure and impure worlds. Looking at the type of <code>&gt;&gt;=</code>:</p>
+<pre><code>(&gt;&gt;=) :: m a -&gt; (a -&gt; m b) -&gt; m b
+</code></pre>
+<p>We can be sure there’s some “unpacking” done in the middle, and how this “unpack” happens is defined by each instance of “Monad” type class.</p>
+<blockquote>
+<p>Many people mistakenly believe that the only reason for having monads in Haskell is to handle non-functional computations i.e. ones that do (file or
+terminal) I/O, alter global variables, etc. And yet, here I showed you a monadic computation which can be done perfectly well without monads. In this
+case, monads are not essential; they’re just very convenient. And that’s why I said that even though the original reason for adding monads to Haskell
+had to do with dealing with inherently non-functional kinds of computations (like computations involving I/O), they turned out to have a far greater
+applicability. That’s why they’re neat.</p>
+</blockquote>
+<pre><code>f :: Int -&gt; Maybe Int
+f x = if x `mod` 2 == 0 then Nothing else Just (2 * x)
+
+g :: Int -&gt; Maybe Int
+g x = if x `mod` 3 == 0 then Nothing else Just (3 * x)
+
+h :: Int -&gt; Maybe Int
+h x = if x `mod` 5 == 0 then Nothing else Just (5 * x)
+
+k = f &gt;=&gt; g &gt;=&gt; h
+
+k x = case f x of
+    Nothing -&gt; Nothing
+    Just y  -&gt; case g y of
+        Nothing -&gt; Nothing
+        Just z  -&gt; h z
+</code></pre>
+<p>Given <code>(&gt;=&gt;) :: Monad m =&gt; (a -&gt; m b) -&gt; (b -&gt; m c) -&gt; (a -&gt; m c)</code>, it’s obvious how it could be constructed using <code>bind</code> above.</p>
+<p>Since <code>Monad</code> is a subclass of <code>Functor</code>, it could be understood as containers, where sequencing operations are defined.</p>
+<h2 id="Applicative-vs-Monad"><a class="header-anchor" href="#Applicative-vs-Monad">§</a>Applicative vs Monad</h2>
+<p><code>Applicative</code> is something between <code>Functor</code> and <code>Monad</code>; it’s a subclass of <code>Functor</code>, and the parent class of <code>Monad</code>. For <code>Applicative</code> types,
+sequencing operations are defined as well, so it’s a bit sutble to pinpoint the difference between <code>Applicative</code> and <code>Monad</code>.</p>
+<p>The following example illustrates that <code>Monad</code> support “short-circus” while <code>Applicative</code> would do the function application anyway.</p>
+<pre><code>import Control.Applicative (pure, (&lt;*&gt;))
+
+monad_f :: Int -&gt; Maybe Int
+monad_f x = return x
+
+monad_f' :: Int -&gt; Maybe Int
+monad_f' x = undefined
+
+applicative_f :: Maybe (Int -&gt; Int)
+applicative_f = return id
+
+applicative_f' :: Maybe (Int -&gt; Int)
+applicative_f' = undefined
+
+x :: Maybe Int
+x = Nothing
+
+main = do
+  print $ x &gt;&gt;= monad_f
+  print $ x &gt;&gt;= monad_f'
+  print $ applicative_f &lt;*&gt; x
+  print $ applicative_f' &lt;*&gt; x
+</code></pre>
+<p>The output is:</p>
+<pre><code>Nothing
+Nothing
+Nothing
+test.hs: Prelude.undefined
+</code></pre>
+<h2 id="Reference"><a class="header-anchor" href="#Reference">§</a>Reference</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://mvanier.livejournal.com">Yet Another Monad Tutorial</a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

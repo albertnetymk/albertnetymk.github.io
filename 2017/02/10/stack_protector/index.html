@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Stack Protector"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2017/02/10/stack_protector/"/>
+
+
+<meta name="description" content="Came across this canary technique from http:&#x2F;&#x2F;blog.quarkslab.com&#x2F;clang-hardening-cheat-sheet.html 123456789101112131415161718192021222324252627#include &lt;stdio.h&gt;#include &lt;string.h&gt;#include">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Stack Protector">
+<meta property="og:url" content="https://albertnetymk.github.io/2017/02/10/stack_protector/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Came across this canary technique from http:&#x2F;&#x2F;blog.quarkslab.com&#x2F;clang-hardening-cheat-sheet.html 123456789101112131415161718192021222324252627#include &lt;stdio.h&gt;#include &lt;string.h&gt;#include">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-02-09T23:30:47.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Stack Protector - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Stack Protector
+        
+      </h1>
+
+      <time class="post-time">
+          Feb 10 2017
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Came across this canary technique from <a target="_blank" rel="noopener" href="http://blog.quarkslab.com/clang-hardening-cheat-sheet.html">http://blog.quarkslab.com/clang-hardening-cheat-sheet.html</a></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="type">static</span> <span class="type">char</span> c;</span><br><span class="line"><span class="type">void</span> <span class="title function_">f</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="type">size_t</span> top = SIZE_MAX;</span><br><span class="line">  <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; ++i) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%p\n&quot;</span>, (<span class="type">void</span>*)((<span class="type">size_t</span>*)&amp;top)[i]);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="type">char</span> b[<span class="number">8</span>];</span><br><span class="line">  <span class="built_in">strcpy</span>(b, &amp;c);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span> &#123;</span><br><span class="line">  <span class="type">size_t</span> x = <span class="number">0</span>;</span><br><span class="line">  c = <span class="string">&#x27;0&#x27;</span>;</span><br><span class="line">  f();</span><br><span class="line">  <span class="type">void</span> *bp;</span><br><span class="line">  <span class="keyword">asm</span> (<span class="string">&quot;mov %%rbp, %0;&quot;</span></span><br><span class="line">      : <span class="string">&quot;=r&quot;</span> (bp)</span><br><span class="line">      :</span><br><span class="line">      :</span><br><span class="line">      );</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;bp is %p\n&quot;</span>, bp);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">clang -fstack-protector test.c &amp;&amp; ./a.out</span></span><br><span class="line">0xffffffffffffffff</span><br><span class="line">0x1</span><br><span class="line">0xdeba1e5fb9c19200</span><br><span class="line">0x7ffd419467a0</span><br><span class="line">0x400694</span><br><span class="line">bp is 0x7ffd419467a0</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">objdump -d a.out | grep -C 2 400694</span></span><br><span class="line">  40068e:       30</span><br><span class="line">  40068f:       e8 4c ff ff ff          callq  4005e0 &lt;f&gt;</span><br><span class="line">  400694:       48 bf 44 07 40 00 00    movabs $0x400744,%rdi</span><br><span class="line">  40069b:       00 00 00</span><br><span class="line">  40069e:       48 89 e8                mov    %rbp,%rax</span><br></pre></td></tr></table></figure>
+<p>The memory layout looks like (address goes from low to high):</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">bp-24 : SIZE_MAX</span><br><span class="line">bp-16 : char b[8]</span><br><span class="line">bp-8  : canary</span><br><span class="line">bp    : old bp</span><br><span class="line">bp+8  : return address</span><br></pre></td></tr></table></figure>
+<p>The return address is confirmed by the <code>objdump</code> above. Similarly, we could do the same analysis for the case without stack protector.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">clang test.c &amp;&amp; ./a.out</span></span><br><span class="line">0xffffffffffffffff</span><br><span class="line">0x7ffe7dc66df0</span><br><span class="line">0x400604</span><br><span class="line">0x400630 # content from previous stack frame, so ignored</span><br><span class="line">0x400470</span><br><span class="line">bp is 0x7ffe7dc66df0</span><br></pre></td></tr></table></figure>
+<p>The memory layout looks like (address goes from low to high):</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">bp-8 : SIZE_MAX</span><br><span class="line">bp   : old bp</span><br><span class="line">bp+8 : return address</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$ objdump -d a.out | grep -C 2 400604</span><br><span class="line">  4005fe:       30</span><br><span class="line">  4005ff:       e8 6c ff ff ff          callq  400570 &lt;f&gt;</span><br><span class="line">  400604:       48 bf b4 06 40 00 00    movabs $0x4006b4,%rdi</span><br><span class="line">  40060b:       00 00 00</span><br><span class="line">  40060e:       48 89 e8                mov    %rbp,%rax</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

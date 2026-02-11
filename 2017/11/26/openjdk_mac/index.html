@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Setting up Development Env for OpenJDK on Mac 10.9 Mavericks"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2017/11/26/openjdk_mac/"/>
+
+
+<meta name="description" content="Due to reasons, I have to set up the dev environment on my Mac 10.9 for OpenJDK. Being someone who is mostly coding on Linux, I was surely unaware of what an arduous journey I put myself onto. The mos">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Setting up Development Env for OpenJDK on Mac 10.9 Mavericks">
+<meta property="og:url" content="https://albertnetymk.github.io/2017/11/26/openjdk_mac/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Due to reasons, I have to set up the dev environment on my Mac 10.9 for OpenJDK. Being someone who is mostly coding on Linux, I was surely unaware of what an arduous journey I put myself onto. The mos">
+<meta property="og:locale">
+<meta property="article:published_time" content="2017-11-26T17:31:31.000Z">
+<meta property="article:modified_time" content="2025-11-07T23:49:24.846Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Setting up Development Env for OpenJDK on Mac 10.9 Mavericks - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Setting up Development Env for OpenJDK on Mac 10.9 Mavericks
+        
+      </h1>
+
+      <time class="post-time">
+          Nov 26 2017
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Due to reasons, I have to set up the dev environment on my Mac 10.9 for OpenJDK. Being someone who is mostly coding on Linux, I was surely unaware of
+what an arduous journey I put myself onto.</p>
+<p>The most import doc I followed in the process is <a target="_blank" rel="noopener" href="https://github.com/dmlloyd/OpenJDK/blob/jdk/jdk/doc/building.md">https://github.com/dmlloyd/OpenJDK/blob/jdk/jdk/doc/building.md</a>, even though it contains a lot of
+outdated information.</p>
+<h2 id="TL-DR"><a class="header-anchor" href="#TL-DR">§</a>TL;DR</h2>
+<ol>
+<li>Fetch source of jdk:</li>
+</ol>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hg clone http://hg.openjdk.java.net/jdk/jdk</span><br></pre></td></tr></table></figure>
+<ol start="2">
+<li>
+<p>Download JTReg from <a target="_blank" rel="noopener" href="https://adopt-openjdk.ci.cloudbees.com/job/jtreg/lastSuccessfulBuild/artifact/">https://adopt-openjdk.ci.cloudbees.com/job/jtreg/lastSuccessfulBuild/artifact/</a></p>
+</li>
+<li>
+<p>Configure</p>
+</li>
+</ol>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash configure --disable-warnings-as-errors --with-jtreg=&lt;downloade_unpacked_path_of_jtreg&gt;</span><br></pre></td></tr></table></figure>
+<ol start="4">
+<li>Build</li>
+</ol>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make images</span><br></pre></td></tr></table></figure>
+<ol start="5">
+<li>Test</li>
+</ol>
+  <figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make run-test-tier1</span><br></pre></td></tr></table></figure>
+<h2 id="Realizing-my-clang-is-obsolete"><a class="header-anchor" href="#Realizing-my-clang-is-obsolete">§</a>Realizing my clang is obsolete</h2>
+<p>On Mac, it’s recommended to use Xcode command line to build OpenJDK. On my box, it’s installed at <code>/Library/Developer/CommandLineTools</code>, which
+provides the real executables for development related tools, e.g. <code>clang</code>. (I was firstly a bit confused because <code>which clang</code> gives me
+<code>/usr/bin/clang</code>, which is <em>not</em> a symlink. I don’t know what’s the relation between <code>/usr/bin/clang</code> and
+<code>/Library/Developer/CommandLineTools/usr/bin/clang</code>. A quick experiment (renaming) reveals that <code>/usr/bin/clang</code> calls
+<code>/Library/Developer/CommandLineTools/usr/bin/clang</code> somehow, and it would crash if it’s not found.</p>
+<p>Since Xcode command line is already installed for me, I should be able to build OpenJDK. <code>bash configure</code> works fine; however, the build failed when I
+call <code>make</code>, and the error is something like <code>error: unknown warning option '-Wno-tautological-undefined-compare'</code>. Apparently, this option wasn’t
+understood by my obsolete clang.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ clang -v</span><br><span class="line">Apple LLVM version 6.0 (clang-600.0.57) (based on LLVM 3.5svn)</span><br><span class="line">Target: x86_64-apple-darwin13.4.0</span><br><span class="line">Thread model: posix</span><br></pre></td></tr></table></figure>
+<h2 id="Building-clang-5"><a class="header-anchor" href="#Building-clang-5">§</a>Building clang-5</h2>
+<p>Since I have Homebrew, the easiest way to install clang-5 is <code>brew install llvm</code>, which failed because of my obsolete clang (of course). Then, I tried
+if gcc could be installed: <code>brew install gcc</code> worked fortunately, making <code>gcc-7</code> available on my box, so I tried to specify it as the C compiler on
+installing llvm via <code>brew install --cc=gcc-7 llvm</code>, which surprisingly failed on building <code>libunwind</code>, a runtime dependency of llvm. I searched on
+google concerning the error message, <code>error: storage class specified...</code>, but didn’t find anything useful. (Possibly, my setup is too weird.)</p>
+<h2 id="Building-OpenJDK-using-gcc-7"><a class="header-anchor" href="#Building-OpenJDK-using-gcc-7">§</a>Building OpenJDK using gcc-7</h2>
+<p>Since I have a working <code>gcc-7</code>, I thought I could tell OpenJDK to use gcc instead of clang: <code>CC=gcc-7 CXX=g++-7 bash configure --with-toolchain-type=gcc</code>. <code>gcc-7</code> was indeed used, but failed with errors like “gcc-7: error: unrecognized command line option
+‘-mstack-alignment=16’”. Some googling indicates that <code>-mstack-alignment</code> is specific to clang. It seems that OpenJDK doesn’t support compilers on Mac
+other than clang.</p>
+<h2 id="Using-clang-5-binary-with-hacky-linker"><a class="header-anchor" href="#Using-clang-5-binary-with-hacky-linker">§</a>Using clang-5 binary with hacky linker</h2>
+<p>All of the sudden, I realized that I actually can try downloading the binary directly from <a target="_blank" rel="noopener" href="http://releases.llvm.org/download.html">http://releases.llvm.org/download.html</a>. After unpacking and
+adding it into my PATH, I restarted with <code>bash configure</code> which failed complaining that the C compiler (clang-5) can’t build executable. On reading
+the verbose log, I found that my clang-5 can’t compiler the following trivial C program:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">int main() &#123;</span><br><span class="line">  return 0;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Trying it manually on the command line, I could confirm that it’s indeed <em>not</em> working. By passing <code>-v</code> option, I was able to locate the error to be
+in the linking process, and the linker was complaining <code>-no_deduplicate</code> was an unknown option. Some googling led me to
+<a target="_blank" rel="noopener" href="https://github.com/llvm-mirror/clang/blob/master/test/Driver/darwin-ld-dedup.c">https://github.com/llvm-mirror/clang/blob/master/test/Driver/darwin-ld-dedup.c</a>, so my linker was obsolete.</p>
+<p>I was able to find the latest source code for <code>ld64</code> at <a target="_blank" rel="noopener" href="https://opensource.apple.com/source/ld64/">https://opensource.apple.com/source/ld64/</a>, but the build system is Xcode, which I don’t have
+on my box. Apparently, <code>ld64</code> was not something in huge demand separately, so I can’t find any places to download the binary. When all hopes are
+forsaken, I decided to “hack” around the problem; filtering out this unknown option before calling the real linker.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">#</span><span class="language-bash">!/bin/zsh</span></span><br><span class="line">/usr/bin/ld &quot;$&#123;(@)@:#-no_deduplicate&#125;&quot;</span><br></pre></td></tr></table></figure>
+<p>This way, I was able to trick <code>bash configure</code> to believe that I have a working C compiler. However, the actual building process wasn’t smooth; the
+error is that “…/clang+llvm-5.0.0-x86_64-apple-darwin/lib/arc/libarclite_macosx.a can’t be found”. After locating the path of <code>libarclite_macosx.a</code>
+is <code>/Library/Developer/CommandLineTools/usr/lib/arc/libarclite_macosx.a</code>, I just copied <code>arc</code> folder in <code>.../clang+llvm-5.0.0-x86_64-apple-darwin/lib</code>
+to mirror the original layout. With this change, I was finally able to build OpenJDK.</p>
+<p>For this kind of low level programming, Linux is surely more friendly, for more developers use that env.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

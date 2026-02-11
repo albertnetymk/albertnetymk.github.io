@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Continuation"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2020/06/29/continuation/"/>
+
+
+<meta name="description" content="Continuation, as its name implies, means what follows from the current state. In the general case, a continuation could be influenced by the current state, so in order to model such “influence”, a con">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Continuation">
+<meta property="og:url" content="https://albertnetymk.github.io/2020/06/29/continuation/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Continuation, as its name implies, means what follows from the current state. In the general case, a continuation could be influenced by the current state, so in order to model such “influence”, a con">
+<meta property="og:locale">
+<meta property="article:published_time" content="2020-06-29T21:38:17.000Z">
+<meta property="article:modified_time" content="2020-06-29T22:07:28.201Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Continuation - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Continuation
+        
+      </h1>
+
+      <time class="post-time">
+          Jun 29 2020
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Continuation, as its name implies, means what follows from the current state. In the general case, a
+continuation could be influenced by the current state, so in order to model such “influence”, a
+continuation accepts an input, which denotes the explicit dependency. I will use two examples to
+illustrate how continuation is used in Racket.</p>
+<h2 id="Component-wise-division"><a class="header-anchor" href="#Component-wise-division">§</a>Component wise division</h2>
+<p>Given two equal-length lists, <code>a</code> and <code>b</code>, implement <code>dot-divide-or-error</code>, which calculates <code>a./b</code>
+or return the passed <code>err-val</code> if any component in <code>b</code> is 0.</p>
+<figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line">(<span class="name">trace-define</span> (<span class="name">dot-divide-or-error</span> numerators denominators err-val)</span><br><span class="line">  (<span class="name">match</span> `(,numerators . ,denominators)</span><br><span class="line">    [`(() . ,_) &#x27;()]</span><br><span class="line">    [`((,x . ,xs) . (,y . ,ys))</span><br><span class="line">      (<span class="name"><span class="built_in">if</span></span> (<span class="name"><span class="built_in">=</span></span> <span class="number">0</span> y)</span><br><span class="line">        err-val</span><br><span class="line">        (<span class="name"><span class="built_in">let</span></span> ([<span class="name">ret</span> (<span class="name">dot-divide-or-error</span> xs ys err-val)])</span><br><span class="line">          (<span class="name"><span class="built_in">begin</span></span></span><br><span class="line">            (<span class="name"><span class="built_in">if</span></span> (<span class="name"><span class="built_in">equal?</span></span> ret err-val)</span><br><span class="line">              err-val</span><br><span class="line">              (<span class="name"><span class="built_in">cons</span></span> (<span class="name"><span class="built_in">/</span></span> x y) ret))</span><br><span class="line">            )))]</span><br><span class="line">    [<span class="name">_</span> err-val]</span><br><span class="line">    ))</span><br><span class="line"></span><br><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">dot-divide-or-error-jump</span> numerators denominators err-val)</span><br><span class="line">  (<span class="name"><span class="built_in">let/ec</span></span> k</span><br><span class="line">          (<span class="name">trace-let</span> dot-divide-or-error-jump#</span><br><span class="line">            ([<span class="name">numerators</span> numerators] [<span class="name">denominators</span> denominators])</span><br><span class="line">            (<span class="name">match</span> `(,numerators . ,denominators)</span><br><span class="line">              [`(() . ,_) &#x27;()]</span><br><span class="line">              [`((,x . ,xs) . (,y . ,ys))</span><br><span class="line">                (<span class="name"><span class="built_in">if</span></span> (<span class="name"><span class="built_in">=</span></span> <span class="number">0</span> y)</span><br><span class="line">                  (<span class="name">k</span> err-val)</span><br><span class="line">                  (<span class="name"><span class="built_in">cons</span></span> (<span class="name"><span class="built_in">/</span></span> x y) (<span class="name">dot-divide-or-error-jump</span># xs ys)))]))))</span><br><span class="line"></span><br><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">dot-divide-or-error-tail</span> numerators denominators err-val)</span><br><span class="line">  (<span class="name">trace-let</span> dot-divide-or-error-tail#</span><br><span class="line">    ([<span class="name">numerators</span> numerators] [<span class="name">denominators</span> denominators] [<span class="name">acc</span> &#x27;()])</span><br><span class="line">    (<span class="name">match</span> `(,numerators . ,denominators)</span><br><span class="line">      [`(() . ,_) (<span class="name"><span class="built_in">reverse</span></span> acc)]</span><br><span class="line">      [`((,x . ,xs) . (,y . ,ys))</span><br><span class="line">        (<span class="name"><span class="built_in">if</span></span> (<span class="name"><span class="built_in">=</span></span> <span class="number">0</span> y)</span><br><span class="line">          err-val</span><br><span class="line">          (<span class="name">dot-divide-or-error-tail</span># xs ys (<span class="name"><span class="built_in">cons</span></span> (<span class="name"><span class="built_in">/</span></span> x y) acc)))])))</span><br><span class="line"></span><br><span class="line"><span class="comment">; example code</span></span><br><span class="line">(<span class="name">displayln</span> <span class="symbol">&#x27;err-val</span>)</span><br><span class="line">(<span class="name">dot-divide-or-error</span> (<span class="name">range</span> <span class="number">1</span> <span class="number">5</span>) (<span class="name"><span class="built_in">append</span></span> (<span class="name">range</span> <span class="number">1</span> <span class="number">4</span>) &#x27;(<span class="number">0</span>)) <span class="literal">#f</span>)</span><br><span class="line">(<span class="name">dot-divide-or-error-jump</span> (<span class="name">range</span> <span class="number">1</span> <span class="number">5</span>) (<span class="name"><span class="built_in">append</span></span> (<span class="name">range</span> <span class="number">1</span> <span class="number">4</span>) &#x27;(<span class="number">0</span>)) <span class="literal">#f</span>)</span><br><span class="line">(<span class="name">dot-divide-or-error-tail</span> (<span class="name">range</span> <span class="number">1</span> <span class="number">5</span>) (<span class="name"><span class="built_in">append</span></span> (<span class="name">range</span> <span class="number">1</span> <span class="number">4</span>) &#x27;(<span class="number">0</span>)) <span class="literal">#f</span>)</span><br><span class="line"></span><br><span class="line">(<span class="name">displayln</span> <span class="symbol">&#x27;success</span>)</span><br><span class="line">(<span class="name">dot-divide-or-error</span> (<span class="name">range</span> <span class="number">1</span> <span class="number">5</span>) (<span class="name"><span class="built_in">append</span></span> (<span class="name">range</span> <span class="number">2</span> <span class="number">6</span>)) <span class="literal">#f</span>)</span><br><span class="line">(<span class="name">dot-divide-or-error-jump</span> (<span class="name">range</span> <span class="number">1</span> <span class="number">5</span>) (<span class="name"><span class="built_in">append</span></span> (<span class="name">range</span> <span class="number">2</span> <span class="number">6</span>)) <span class="literal">#f</span>)</span><br><span class="line">(<span class="name">dot-divide-or-error-tail</span> (<span class="name">range</span> <span class="number">1</span> <span class="number">5</span>) (<span class="name"><span class="built_in">append</span></span> (<span class="name">range</span> <span class="number">2</span> <span class="number">6</span>)) <span class="literal">#f</span>)</span><br></pre></td></tr></table></figure>
+<p>In the output, we can see that <code>*-jump</code> (continuation) and <code>*-tail</code> (tail call) versions immediately
+return on error, without going through the call stack. When no error occurs, the tail call version
+can still avoid going though the call stack on return.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">racket ex1.rkt</span></span><br><span class="line">err-val</span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error <span class="string">&#x27;(1 2 3 4) &#x27;</span>(1 2 3 0) <span class="comment">#f)</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">(dot-divide-or-error <span class="string">&#x27;(2 3 4) &#x27;</span>(2 3 0) <span class="comment">#f)</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt;(dot-divide-or-error <span class="string">&#x27;(3 4) &#x27;</span>(3 0) <span class="comment">#f)</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt; (dot-divide-or-error <span class="string">&#x27;(4) &#x27;</span>(0) <span class="comment">#f)</span></span></span><br><span class="line">&lt; &lt; #f</span><br><span class="line">&lt; &lt;#f</span><br><span class="line">&lt; #f</span><br><span class="line">&lt;#f</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">f</span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-jump<span class="comment"># &#x27;(1 2 3 4) &#x27;(1 2 3 0))</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">(dot-divide-or-error-jump<span class="comment"># &#x27;(2 3 4) &#x27;(2 3 0))</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt;(dot-divide-or-error-jump<span class="comment"># &#x27;(3 4) &#x27;(3 0))</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt; (dot-divide-or-error-jump<span class="comment"># &#x27;(4) &#x27;(0))</span></span></span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">f</span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;(1 2 3 4) &#x27;(1 2 3 0) &#x27;())</span></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;(2 3 4) &#x27;(2 3 0) &#x27;(1))</span></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;(3 4) &#x27;(3 0) &#x27;(1 1))</span></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;(4) &#x27;(0) &#x27;(1 1 1))</span></span></span><br><span class="line">&lt;#f</span><br><span class="line"><span class="meta prompt_">#</span><span class="language-bash">f</span></span><br><span class="line">success</span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error <span class="string">&#x27;(1 2 3 4) &#x27;</span>(2 3 4 5) <span class="comment">#f)</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">(dot-divide-or-error <span class="string">&#x27;(2 3 4) &#x27;</span>(3 4 5) <span class="comment">#f)</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt;(dot-divide-or-error <span class="string">&#x27;(3 4) &#x27;</span>(4 5) <span class="comment">#f)</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt; (dot-divide-or-error <span class="string">&#x27;(4) &#x27;</span>(5) <span class="comment">#f)</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt; &gt;(dot-divide-or-error <span class="string">&#x27;() &#x27;</span>() <span class="comment">#f)</span></span></span><br><span class="line">&lt; &lt; &lt;&#x27;()</span><br><span class="line">&lt; &lt; &#x27;(4/5)</span><br><span class="line">&lt; &lt;&#x27;(3/4 4/5)</span><br><span class="line">&lt; &#x27;(2/3 3/4 4/5)</span><br><span class="line">&lt;&#x27;(1/2 2/3 3/4 4/5)</span><br><span class="line">&#x27;(1/2 2/3 3/4 4/5)</span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-jump<span class="comment"># &#x27;(1 2 3 4) &#x27;(2 3 4 5))</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">(dot-divide-or-error-jump<span class="comment"># &#x27;(2 3 4) &#x27;(3 4 5))</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt;(dot-divide-or-error-jump<span class="comment"># &#x27;(3 4) &#x27;(4 5))</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt; (dot-divide-or-error-jump<span class="comment"># &#x27;(4) &#x27;(5))</span></span></span><br><span class="line"><span class="meta prompt_">&gt; </span><span class="language-bash">&gt; &gt;(dot-divide-or-error-jump<span class="comment"># &#x27;() &#x27;())</span></span></span><br><span class="line">&lt; &lt; &lt;&#x27;()</span><br><span class="line">&lt; &lt; &#x27;(4/5)</span><br><span class="line">&lt; &lt;&#x27;(3/4 4/5)</span><br><span class="line">&lt; &#x27;(2/3 3/4 4/5)</span><br><span class="line">&lt;&#x27;(1/2 2/3 3/4 4/5)</span><br><span class="line">&#x27;(1/2 2/3 3/4 4/5)</span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;(1 2 3 4) &#x27;(2 3 4 5) &#x27;())</span></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;(2 3 4) &#x27;(3 4 5) &#x27;(1/2))</span></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;(3 4) &#x27;(4 5) &#x27;(2/3 1/2))</span></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;(4) &#x27;(5) &#x27;(3/4 2/3 1/2))</span></span></span><br><span class="line"><span class="meta prompt_">&gt;</span><span class="language-bash">(dot-divide-or-error-tail<span class="comment"># &#x27;() &#x27;() &#x27;(4/5 3/4 2/3 1/2))</span></span></span><br><span class="line">&lt;&#x27;(1/2 2/3 3/4 4/5)</span><br><span class="line">&#x27;(1/2 2/3 3/4 4/5)</span><br></pre></td></tr></table></figure>
+<h2 id="Iterating-a-list"><a class="header-anchor" href="#Iterating-a-list">§</a>Iterating a list</h2>
+<p>Find the first element that satisfies a predicate in a list.</p>
+<figure class="highlight scheme"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">my-pred</span> x) (<span class="name"><span class="built_in">&gt;</span></span> x <span class="number">3</span>))</span><br><span class="line"></span><br><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">find-rec</span> pred l)</span><br><span class="line">  (<span class="name">match</span> l</span><br><span class="line">    [`() <span class="literal">#f</span>]</span><br><span class="line">    [`(,x . ,xs) (<span class="name"><span class="built_in">if</span></span> (<span class="name">pred</span> x)</span><br><span class="line">                   x</span><br><span class="line">                   (<span class="name">find-rec</span> pred xs))]))</span><br><span class="line"></span><br><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">find-rec-jump</span> pred l)</span><br><span class="line">  (<span class="name"><span class="built_in">let/ec</span></span> k</span><br><span class="line">          (<span class="name"><span class="built_in">let</span></span> find-jump# ([<span class="name">l</span> l])</span><br><span class="line">            (<span class="name">match</span> l</span><br><span class="line">              [`() <span class="literal">#f</span>]</span><br><span class="line">              [`(,x . ,xs) (<span class="name"><span class="built_in">if</span></span> (<span class="name">pred</span> x)</span><br><span class="line">                             (<span class="name">k</span> x)</span><br><span class="line">                             (<span class="name">find-jump</span># xs))]))))</span><br><span class="line"></span><br><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">my-foldl</span> f acc l)</span><br><span class="line">  (<span class="name">match</span> l</span><br><span class="line">    [`() acc]</span><br><span class="line">    [`(,x . ,xs) (<span class="name">my-foldl</span> f (<span class="name">f</span> x acc) xs)]))</span><br><span class="line"></span><br><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">find-via-fold</span> pred l)</span><br><span class="line">  (<span class="name"><span class="built_in">define</span></span> found <span class="literal">#f</span>)</span><br><span class="line">  (<span class="name">my-foldl</span> (<span class="name"><span class="built_in">lambda</span></span> (x acc)</span><br><span class="line">              (<span class="name"><span class="built_in">cond</span></span></span><br><span class="line">                [<span class="name">found</span> acc]</span><br><span class="line">                [(<span class="name">pred</span> x) (<span class="name"><span class="built_in">begin</span></span></span><br><span class="line">                            (<span class="name"><span class="built_in">set!</span></span> found <span class="literal">#t</span>)</span><br><span class="line">                            x)]</span><br><span class="line">                [<span class="name"><span class="built_in">else</span></span> acc]))</span><br><span class="line">            <span class="literal">#f</span></span><br><span class="line">            l))</span><br><span class="line"></span><br><span class="line">(<span class="name"><span class="built_in">define</span></span> (<span class="name">find-via-fold-jump</span> pred l)</span><br><span class="line">  (<span class="name"><span class="built_in">let/ec</span></span> k</span><br><span class="line">          (<span class="name">my-foldl</span> (<span class="name"><span class="built_in">lambda</span></span> (x _)</span><br><span class="line">                      (<span class="name"><span class="built_in">if</span></span> (<span class="name">pred</span> x)</span><br><span class="line">                        (<span class="name">k</span> x)</span><br><span class="line">                        <span class="literal">#f</span>))</span><br><span class="line">                    <span class="literal">#f</span></span><br><span class="line">                    l)))</span><br><span class="line"></span><br><span class="line"><span class="comment">; benchmarking code</span></span><br><span class="line">(<span class="name">for</span> ([<span class="name">high</span> (<span class="name"><span class="built_in">map</span></span> (<span class="name"><span class="built_in">lambda</span></span> (x) (<span class="name"><span class="built_in">*</span></span> <span class="number">2</span> x)) (<span class="name">range</span> <span class="number">1</span> <span class="number">3</span>))])</span><br><span class="line">  (<span class="name"><span class="built_in">let*</span></span> ([<span class="name">len</span> (<span class="name"><span class="built_in">*</span></span> high <span class="number">1000</span> <span class="number">1000</span>)]</span><br><span class="line">         [<span class="name"><span class="built_in">list</span></span> (<span class="name">range</span> <span class="number">1</span> len)])</span><br><span class="line">    (<span class="name"><span class="built_in">begin</span></span></span><br><span class="line">      (<span class="name">printf</span> <span class="string">&quot;list-len = ~a~n&quot;</span> len)</span><br><span class="line">      (<span class="name">time</span> (<span class="name">find-rec</span> my-pred list))</span><br><span class="line">      (<span class="name">time</span> (<span class="name">find-rec-jump</span> my-pred list))</span><br><span class="line">      (<span class="name">time</span> (<span class="name">find-via-fold</span> my-pred list))</span><br><span class="line">      (<span class="name">time</span> (<span class="name">find-via-fold-jump</span> my-pred list))</span><br><span class="line">      )))</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>In the output, we can see that continuation provides a way for “early return” inside a <code>fold</code>.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">racket ex2.rkt</span></span><br><span class="line">list-len = 2000000</span><br><span class="line">cpu time: 0 real time: 1 gc time: 0</span><br><span class="line">cpu time: 0 real time: 0 gc time: 0</span><br><span class="line">cpu time: 32 real time: 32 gc time: 0</span><br><span class="line">cpu time: 0 real time: 0 gc time: 0</span><br><span class="line">list-len = 4000000</span><br><span class="line">cpu time: 0 real time: 0 gc time: 0</span><br><span class="line">cpu time: 0 real time: 0 gc time: 0</span><br><span class="line">cpu time: 61 real time: 61 gc time: 0</span><br><span class="line">cpu time: 0 real time: 0 gc time: 0</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Sorted Product"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2019/12/09/sorted_product/"/>
+
+
+<meta name="description" content="§Problem Given five positive integer, a &lt; b &lt; c &lt; d &lt; e, there are 10 products for any pair of them. The 3 smallest products are 28, 32, and 56, while the 2 largest products are 128 and 24">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sorted Product">
+<meta property="og:url" content="https://albertnetymk.github.io/2019/12/09/sorted_product/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="§Problem Given five positive integer, a &lt; b &lt; c &lt; d &lt; e, there are 10 products for any pair of them. The 3 smallest products are 28, 32, and 56, while the 2 largest products are 128 and 24">
+<meta property="og:locale">
+<meta property="article:published_time" content="2019-12-09T21:13:26.000Z">
+<meta property="article:modified_time" content="2019-12-09T21:19:54.367Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Sorted Product - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Sorted Product
+        
+      </h1>
+
+      <time class="post-time">
+          Dec 9 2019
+      </time>
+    </header>
+
+    <div class="post-content">
+    <h2 id="Problem"><a class="header-anchor" href="#Problem">§</a>Problem</h2>
+<p>Given five positive integer, <code>a &lt; b &lt; c &lt; d &lt; e</code>, there are 10 products for any pair of them. The 3 smallest products are 28, 32, and 56, while the 2
+largest products are 128 and 240. Find the value of <code>e</code>.</p>
+<h2 id="Solution"><a class="header-anchor" href="#Solution">§</a>Solution</h2>
+<p>One mathematical approach could be finding the ratio among all those numbers, sth along the line: <code>b : c : d = ...</code>, which is not super hard to
+tackle. The Haskell solution is elegant as well:</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> Data.List</span><br><span class="line"><span class="keyword">import</span> Control.Monad</span><br><span class="line"></span><br><span class="line"><span class="title">solution</span> :: [<span class="type">Int</span>]</span><br><span class="line"><span class="title">solution</span> = candidates !! <span class="number">0</span></span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">    candidates = <span class="keyword">do</span></span><br><span class="line">      e &lt;- [<span class="number">1</span>..<span class="number">240</span>]</span><br><span class="line">      d &lt;- [<span class="number">1</span>..e-<span class="number">1</span>]</span><br><span class="line">      c &lt;- [<span class="number">1</span>..d-<span class="number">1</span>]</span><br><span class="line">      b &lt;- [<span class="number">1</span>..c-<span class="number">1</span>]</span><br><span class="line">      a &lt;- [<span class="number">1</span>..b-<span class="number">1</span>]</span><br><span class="line">      <span class="keyword">let</span> sorted = sort $ all_pair [a,b,c,d,e]</span><br><span class="line">      guard $ [<span class="number">28</span>, <span class="number">32</span>, <span class="number">56</span>] == take <span class="number">3</span> sorted</span><br><span class="line">      guard $ [<span class="number">128</span>, <span class="number">240</span>] == (reverse $ take <span class="number">2</span> $ reverse sorted)</span><br><span class="line">      return [a, b, c, d, e]</span><br><span class="line"></span><br><span class="line">    all_pair :: [<span class="type">Int</span>] -&gt; [<span class="type">Int</span>]</span><br><span class="line">    all_pair [] = []</span><br><span class="line">    all_pair (x:xs) = all_pair xs ++ map (*x) xs</span><br><span class="line"></span><br><span class="line"><span class="title">main</span> = <span class="keyword">do</span></span><br><span class="line">  print solution</span><br><span class="line"><span class="comment">-- [4,7,8,15,16]</span></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

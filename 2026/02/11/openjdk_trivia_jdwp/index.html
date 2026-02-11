@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="OpenJDK Trivia: Class Unloading and JDWP"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2026/02/11/openjdk_trivia_jdwp/"/>
+
+
+<meta name="description" content="§1. Introduction to JDWP The Java Debug Wire Protocol (JDWP) enables remote debugging of Java applications by allowing debuggers to connect to a running JVM and inspect its state. However, JDWP brings">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenJDK Trivia: Class Unloading and JDWP">
+<meta property="og:url" content="https://albertnetymk.github.io/2026/02/11/openjdk_trivia_jdwp/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="§1. Introduction to JDWP The Java Debug Wire Protocol (JDWP) enables remote debugging of Java applications by allowing debuggers to connect to a running JVM and inspect its state. However, JDWP brings">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-02-11T14:51:56.000Z">
+<meta property="article:modified_time" content="2026-02-11T14:52:05.123Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> OpenJDK Trivia: Class Unloading and JDWP - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          OpenJDK Trivia: Class Unloading and JDWP
+        
+      </h1>
+
+      <time class="post-time">
+          Feb 11 2026
+      </time>
+    </header>
+
+    <div class="post-content">
+    <h2 id="1-Introduction-to-JDWP"><a class="header-anchor" href="#1-Introduction-to-JDWP">§</a>1. Introduction to JDWP</h2>
+<p>The Java Debug Wire Protocol (JDWP) enables remote debugging of Java applications by allowing debuggers to connect to a running JVM and inspect its state. However, JDWP brings subtle implications for memory management, particularly around class lifecycle events like <code>ClassPrepare</code>, which can have unexpected consequences for garbage collection and class unloading.</p>
+<p>To understand how this works, it’s helpful to know the key components:</p>
+<ul>
+<li><strong>JDWP Agent</strong>: A native library running inside the debugged JVM that communicates with the debugger over a socket. It hooks into JVMTI (Java Virtual Machine Tool Interface) to receive VM events.</li>
+<li><strong>JVMTI (Java Virtual Machine Tool Interface)</strong>: The low-level interface that allows agents to monitor and interact with various JVM events, like class loading and method entry.</li>
+<li><strong>JDI (Java Debug Interface)</strong>: The client-side Java API that debuggers use to communicate with the JDWP agent and interact with the debugged VM.</li>
+</ul>
+<p>The architecture is thus: <strong>JVM → JVMTI → JDWP Agent (native) ↔ JDWP Protocol ↔ JDI Client (debugger)</strong>. When events occur in the JVM, they flow from JVMTI through the agent to the debugger client.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">┌─────────────────────────────────────────────────────────────────┐</span><br><span class="line">│                         Debugged JVM                            │</span><br><span class="line">│  ┌────────────────────────┐      ┌───────────────────────────┐  │</span><br><span class="line">│  │    Java Application    │      │    JDWP Agent (Native)    │  │</span><br><span class="line">│  │                        │      │                           │  │</span><br><span class="line">│  │ [Class Loaded] ───────►│─────►│ 1. JVMTI ClassPrepare     │  │</span><br><span class="line">│  └────────────────────────┘      │    (Synchronous)          │  │</span><br><span class="line">│              ▲                   │    - Creates GlobalRef    │  │</span><br><span class="line">│              │                   │    - Enqueues Command     │  │</span><br><span class="line">│              │                   └─────────────┬─────────────┘  │</span><br><span class="line">│              │                                 │ (Queue)        │</span><br><span class="line">│              │                   ┌─────────────▼─────────────┐  │</span><br><span class="line">│              └───────────────────│ 2. Agent Thread           │  │</span><br><span class="line">│         (GC Prevented)           │    (Asynchronous)         │  │</span><br><span class="line">│                                  │    - Dequeues Command     │  │</span><br><span class="line">│                                  │    - Sends Packet         │  │</span><br><span class="line">│                                  │    - Deletes GlobalRef    │  │</span><br><span class="line">│                                  └─────────────┬─────────────┘  │</span><br><span class="line">└────────────────────────────────────────────────┼────────────────┘</span><br><span class="line">                                                 │</span><br><span class="line">                                           JDWP Protocol</span><br><span class="line">                                           (Socket I/O)</span><br><span class="line">                                                 │</span><br><span class="line">┌────────────────────────────────────────────────▼────────────────┐</span><br><span class="line">│                    Debugger Process                             │</span><br><span class="line">│                                                                 │</span><br><span class="line">│   [ JDI Client ] &lt;──────────────────────────────────────────┘   │</span><br><span class="line">└─────────────────────────────────────────────────────────────────┘</span><br></pre></td></tr></table></figure>
+<h2 id="2-The-Class-Preparing-Event"><a class="header-anchor" href="#2-The-Class-Preparing-Event">§</a>2. The Class Preparing Event</h2>
+<p>When a class reaches the <em>prepared</em> phase of initialization, JVMTI fires a <code>ClassPrepare</code> event. The JDWP agent listens for this event so it can notify the attached debugger.</p>
+<h3 id="2-1-Callback-Registration"><a class="header-anchor" href="#2-1-Callback-Registration">§</a>2.1 Callback Registration</h3>
+<p>The JDWP agent registers its <code>ClassPrepare</code> callback during initialization, in <code>classTrack_initialize</code> (<code>src/jdk.jdwp.agent/share/native/libjdwp/classTrack.c</code>):</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * Called once to initialize class-tracking.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">void</span></span><br><span class="line"><span class="title function_">classTrack_initialize</span><span class="params">(JNIEnv *env)</span></span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="keyword">if</span> (!setupEvents()) &#123;</span><br><span class="line">      ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> jboolean</span><br><span class="line"><span class="title function_">setupEvents</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// Enable CLASS_PREPARE events</span></span><br><span class="line">    error = JVMTI_FUNC_PTR(trackingEnv, SetEventNotificationMode)(trackingEnv, JVMTI_ENABLE, JVMTI_EVENT_CLASS_PREPARE, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>This tells JVMTI to invoke the registered callback whenever a class is prepared.</p>
+<h3 id="2-2-Callback-Firing"><a class="header-anchor" href="#2-2-Callback-Firing">§</a>2.2 Callback Firing</h3>
+<p>On the HotSpot side, <code>JvmtiExport::post_class_prepare</code> (<code>src/hotspot/share/prims/jvmtiExport.cpp</code>) iterates over active JVMTI environments and invokes their registered <code>ClassPrepare</code> callbacks:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">void</span> <span class="title">JvmtiExport::post_class_prepare</span><span class="params">(JavaThread *thread, Klass* klass)</span> </span>&#123;</span><br><span class="line">  ...</span><br><span class="line">    jvmtiEventClassPrepare callback = env-&gt;<span class="built_in">callbacks</span>()-&gt;ClassPrepare;</span><br><span class="line">    <span class="keyword">if</span> (callback != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">      (*callback)(env-&gt;<span class="built_in">jvmti_external</span>(), jem.<span class="built_in">jni_env</span>(), jem.<span class="built_in">jni_thread</span>(), jem.<span class="built_in">jni_class</span>());</span><br><span class="line">    &#125;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="2-3-Callback-Implementation"><a class="header-anchor" href="#2-3-Callback-Implementation">§</a>2.3 Callback Implementation</h3>
+<p>The JDWP agent’s callback is <code>cbClassPrepare</code> in <code>src/jdk.jdwp.agent/share/native/libjdwp/eventHandler.c</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* Event callback for JVMTI_EVENT_CLASS_PREPARE */</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> JNICALL</span><br><span class="line"><span class="title function_">cbClassPrepare</span><span class="params">(jvmtiEnv *jvmti_env, JNIEnv *env,</span></span><br><span class="line"><span class="params">                        jthread thread, jclass klass)</span></span><br><span class="line">&#123;</span><br><span class="line">    EventInfo info;</span><br><span class="line"></span><br><span class="line">    LOG_CB((<span class="string">&quot;cbClassPrepare: thread=%p&quot;</span>, thread));</span><br><span class="line"></span><br><span class="line">    BEGIN_CALLBACK() &#123;</span><br><span class="line">        (<span class="type">void</span>)<span class="built_in">memset</span>(&amp;info,<span class="number">0</span>,<span class="keyword">sizeof</span>(info));</span><br><span class="line">        info.ei         = EI_CLASS_PREPARE;</span><br><span class="line">        info.thread     = thread;</span><br><span class="line">        info.clazz      = klass;</span><br><span class="line">        event_callback(env, &amp;info);</span><br><span class="line">    &#125; END_CALLBACK();</span><br><span class="line"></span><br><span class="line">    LOG_MISC((<span class="string">&quot;END cbClassPrepare&quot;</span>));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>event_callback()</code> calls into <code>eventHelper_recordEvent</code>, which converts the local <code>jclass</code> reference into a <strong>JNI global reference</strong> via <code>saveGlobalRef</code> (<code>NewGlobalRef</code>) so the class remains reachable beyond this callback. The event command is then enqueued for asynchronous delivery.</p>
+<p>The <strong>agent thread</strong> runs <code>commandLoop</code> (<code>src/jdk.jdwp.agent/share/native/libjdwp/eventHelper.c</code>), which dequeues and processes these commands:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment"> * The event helper thread. Dequeues commands and processes them.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> JNICALL</span><br><span class="line"><span class="title function_">commandLoop</span><span class="params">(jvmtiEnv* jvmti_env, JNIEnv* jni_env, <span class="type">void</span>* arg)</span></span><br><span class="line">&#123;</span><br><span class="line">    LOG_MISC((<span class="string">&quot;Begin command loop thread&quot;</span>));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (JNI_TRUE) &#123;</span><br><span class="line">        HelperCommand *command = dequeueCommand();</span><br><span class="line">        <span class="keyword">if</span> (command != <span class="literal">NULL</span>) &#123;</span><br><span class="line">            ...</span><br><span class="line">            <span class="keyword">if</span> (!gdata-&gt;vmDead) &#123;</span><br><span class="line">                log_debugee_location(<span class="string">&quot;commandLoop(): command being handled&quot;</span>, <span class="literal">NULL</span>, <span class="literal">NULL</span>, <span class="number">0</span>);</span><br><span class="line">                handleCommand(jni_env, command);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>When processing a command, <code>handleCommand</code> calls <code>handleEventCommandSingle</code>, which writes the event to a JDWP packet and then calls <code>tossGlobalRef</code> (<code>DeleteGlobalRef</code>) to release the reference.</p>
+<h2 id="3-The-Problem-Global-Reference-Management"><a class="header-anchor" href="#3-The-Problem-Global-Reference-Management">§</a>3. The Problem: Global Reference Management</h2>
+<p>As described above, processing a <code>ClassPrepare</code> event involves two steps on two different threads: the <strong>application thread</strong> creates a JNI global reference to the class (so it remains live across the asynchronous handoff), and the <strong>agent thread</strong> deletes that reference after sending the event to the debugger.</p>
+<p>The cleanup—<code>tossGlobalRef</code> (<code>DeleteGlobalRef</code>)—only happens when the agent thread dequeues and processes the command. Until then, the global reference keeps the class alive.</p>
+<h3 id="3-1-The-Race-Condition"><a class="header-anchor" href="#3-1-The-Race-Condition">§</a>3.1 The Race Condition</h3>
+<p>This creates a window between global ref creation and deletion:</p>
+<ol>
+<li><strong>Application thread</strong> calls <code>saveEventInfoRefs</code> → <code>saveGlobalRef</code> → <code>NewGlobalRef</code>, and enqueues the event command.</li>
+<li><strong>Agent thread</strong> dequeues the command, sends the JDWP packet, and calls <code>tossEventInfoRefs</code> → <code>tossGlobalRef</code> → <code>DeleteGlobalRef</code>.</li>
+</ol>
+<p>If the application drops all references to a class and triggers <code>System.gc()</code> while the event command is still in the queue, the global reference acts as a GC root, preventing the class (and its <code>ClassLoader</code>) from being collected.</p>
+<p>On a loaded system, or if the agent thread is slow to drain the queue, this window can be significant, causing class unloading failure.</p>
+<h2 id="4-The-Issue-in-Action"><a class="header-anchor" href="#4-The-Issue-in-Action">§</a>4. The Issue in Action</h2>
+<p>Consider a scenario where you dynamically load a class via a custom <code>URLClassLoader</code>, use it, and then attempt to unload it by closing the loader and triggering garbage collection. You might expect the class to be collected when there are no more references to it. However, due to the presence of the JDWP agent, the JNI global reference created while emitting the <code>ClassPrepare</code> event may still be live, preventing the class from being unloaded.</p>
+<p>Here’s a concrete example that demonstrates this:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.io.*;</span><br><span class="line"><span class="keyword">import</span> java.lang.ref.PhantomReference;</span><br><span class="line"><span class="keyword">import</span> java.net.*;</span><br><span class="line"><span class="keyword">import</span> java.util.*;</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> com.sun.jdi.*;</span><br><span class="line"><span class="keyword">import</span> com.sun.jdi.connect.*;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">G</span> &#123;&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Debuggee</span> &#123;</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">String</span> <span class="variable">className</span> <span class="operator">=</span> <span class="string">&quot;G&quot;</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> URLClassLoader loader;</span><br><span class="line">    <span class="keyword">static</span> PhantomReference&lt;Object&gt; ref;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">        <span class="keyword">try</span> (<span class="type">ServerSocket</span> <span class="variable">ss</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">ServerSocket</span>(<span class="number">9000</span>); <span class="type">Socket</span> <span class="variable">s</span> <span class="operator">=</span> ss.accept();</span><br><span class="line">             <span class="type">PrintWriter</span> <span class="variable">out</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">PrintWriter</span>(s.getOutputStream(), <span class="literal">true</span>);</span><br><span class="line">             <span class="type">BufferedReader</span> <span class="variable">in</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BufferedReader</span>(<span class="keyword">new</span> <span class="title class_">InputStreamReader</span>(s.getInputStream()))) &#123;</span><br><span class="line"></span><br><span class="line">            String cmd;</span><br><span class="line">            <span class="keyword">while</span> ((cmd = in.readLine()) != <span class="literal">null</span>) &#123;</span><br><span class="line">                <span class="keyword">if</span> (cmd.equals(<span class="string">&quot;LOAD&quot;</span>)) &#123;</span><br><span class="line">                    loader = <span class="keyword">new</span> <span class="title class_">URLClassLoader</span>(<span class="keyword">new</span> <span class="title class_">URL</span>[]&#123;<span class="keyword">new</span> <span class="title class_">File</span>(<span class="string">&quot;./&quot;</span>).toURI().toURL()&#125;, <span class="literal">null</span>);</span><br><span class="line">                    loader.loadClass(className);</span><br><span class="line">                    Class&lt;?&gt; cls = Class.forName(className, <span class="literal">true</span> <span class="comment">/* initialize */</span>, loader);</span><br><span class="line">                    ref = <span class="keyword">new</span> <span class="title class_">PhantomReference</span>&lt;&gt;(loader, <span class="literal">null</span>);</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (cmd.equals(<span class="string">&quot;UNLOAD&quot;</span>)) &#123;</span><br><span class="line">                    loader.close();</span><br><span class="line">                    loader = <span class="literal">null</span>;</span><br><span class="line">                    System.gc();</span><br><span class="line">                    <span class="type">boolean</span> <span class="variable">isUnloaded</span> <span class="operator">=</span> ref.refersTo(<span class="literal">null</span>);</span><br><span class="line">                    <span class="keyword">if</span> (!isUnloaded) &#123;</span><br><span class="line">                      System.out.println(<span class="string">&quot;[Debuggee] unloading failed.&quot;</span>);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (cmd.equals(<span class="string">&quot;EXIT&quot;</span>)) <span class="keyword">break</span>;</span><br><span class="line">                out.println(<span class="string">&quot;OK&quot;</span>); <span class="comment">// Unblock the debugger</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Debugger</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception &#123;</span><br><span class="line">      <span class="comment">// 1. Find the specific SocketAttach connector</span></span><br><span class="line">        <span class="type">VirtualMachineManager</span> <span class="variable">vmm</span> <span class="operator">=</span> Bootstrap.virtualMachineManager();</span><br><span class="line">        <span class="type">AttachingConnector</span> <span class="variable">ac</span> <span class="operator">=</span> vmm.attachingConnectors().stream()</span><br><span class="line">                .filter(c -&gt; c.name().equals(<span class="string">&quot;com.sun.jdi.SocketAttach&quot;</span>))</span><br><span class="line">                .findFirst()</span><br><span class="line">                .orElseThrow(() -&gt; <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;SocketAttach connector not found&quot;</span>));</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 2. Set the port</span></span><br><span class="line">        Map&lt;String, Connector.Argument&gt; argMap = ac.defaultArguments();</span><br><span class="line">        argMap.get(<span class="string">&quot;port&quot;</span>).setValue(<span class="string">&quot;8000&quot;</span>);</span><br><span class="line">        <span class="type">VirtualMachine</span> <span class="variable">vm</span> <span class="operator">=</span> ac.attach(argMap);</span><br><span class="line">        System.out.println(<span class="string">&quot;[Debugger] JDI Attached.&quot;</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// Socket Control</span></span><br><span class="line">        <span class="keyword">try</span> (<span class="type">Socket</span> <span class="variable">s</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Socket</span>(<span class="string">&quot;localhost&quot;</span>, <span class="number">9000</span>);</span><br><span class="line">             <span class="type">PrintWriter</span> <span class="variable">out</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">PrintWriter</span>(s.getOutputStream(), <span class="literal">true</span>);</span><br><span class="line">             <span class="type">BufferedReader</span> <span class="variable">in</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BufferedReader</span>(<span class="keyword">new</span> <span class="title class_">InputStreamReader</span>(s.getInputStream()))) &#123;</span><br><span class="line"></span><br><span class="line">          <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; <span class="number">100</span>; ++i) &#123;</span><br><span class="line">            <span class="keyword">for</span> (String cmd : <span class="keyword">new</span> <span class="title class_">String</span>[]&#123;<span class="string">&quot;LOAD&quot;</span>, <span class="string">&quot;UNLOAD&quot;</span>&#125;) &#123;</span><br><span class="line">                out.println(cmd);</span><br><span class="line">                in.readLine(); <span class="comment">// Wait for &quot;OK&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;</span><br><span class="line">          out.println(<span class="string">&quot;EXIT&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        System.out.println(<span class="string">&quot;[Debugger] Disposed.&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="4-1-How-the-Example-Works"><a class="header-anchor" href="#4-1-How-the-Example-Works">§</a>4.1 How the Example Works</h3>
+<p>The code example consists of two parts: a <strong>Debuggee</strong> (the application being debugged) and a <strong>Debugger</strong> (the debugger client).</p>
+<p><strong>The Debuggee:</strong></p>
+<ul>
+<li>Listens for commands on a socket</li>
+<li>When it receives a <code>LOAD</code> command, it loads class <code>G</code> into a custom <code>URLClassLoader</code></li>
+<li>It stores a <code>PhantomReference</code> to the loader (useful for detecting when the loader has been garbage collected)</li>
+<li>When it receives an <code>UNLOAD</code> command, it closes the loader, nullifies the <code>loader</code> variable, and calls <code>System.gc()</code></li>
+<li>It then checks if the loader was garbage collected using the phantom reference</li>
+</ul>
+<p><strong>The Debugger:</strong></p>
+<ul>
+<li>Attaches to the debuggee using the JDWP Socket Attach connector</li>
+<li>This causes JDWP events to be monitored, triggering <code>ClassPrepare</code> events whenever new classes are loaded</li>
+<li>It then sends 100 load/unload cycles to stress-test the class unloading process</li>
+</ul>
+<h3 id="4-2-Running-the-Example"><a class="header-anchor" href="#4-2-Running-the-Example">§</a>4.2 Running the Example</h3>
+<p>Running it with:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">javac test_jdwp.java;</span><br><span class="line">java -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=8000 Debuggee</span><br><span class="line"></span><br><span class="line"># in another shell</span><br><span class="line">java Debugger</span><br></pre></td></tr></table></figure>
+<p>From time to time, the unloading will fail, especially when there are heavy background tasks on the same system. (Alternatively, one can place an artificial <code>sleep(1)</code> inside <code>commandLoop</code> to induce delays in the agent thread. That way, this unloading failure becomes almost always reproducible.)</p>
+<h2 id="5-References"><a class="header-anchor" href="#5-References">§</a>5. References</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://bugs.openjdk.org/browse/JDK-8292879">com/sun/jdi/ClassUnloadEventTest.java failed due to classes not unloading</a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>
