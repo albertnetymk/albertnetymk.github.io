@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Closure Scope"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2015/03/06/closure_scope/"/>
+
+
+<meta name="description" content="§Scope Scope determines what one variable is referring to, and there are two categories of scope: lexical (static) scope and dynamic scope. 12345In languages with lexical scope (also called static sco">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Closure Scope">
+<meta property="og:url" content="https://albertnetymk.github.io/2015/03/06/closure_scope/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="§Scope Scope determines what one variable is referring to, and there are two categories of scope: lexical (static) scope and dynamic scope. 12345In languages with lexical scope (also called static sco">
+<meta property="og:locale">
+<meta property="article:published_time" content="2015-03-06T10:14:58.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Closure Scope - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Closure Scope
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 6 2015
+      </time>
+    </header>
+
+    <div class="post-content">
+    <h2 id="Scope"><a class="header-anchor" href="#Scope">§</a>Scope</h2>
+<p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Scope_%28computer_science%29">Scope</a> determines
+what one variable is referring to, and there are two categories of scope:
+lexical (static) scope and dynamic scope.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">In languages with lexical scope (also called static scope), name resolution</span><br><span class="line">depends on the location in the source code and the lexical context. In contrast,</span><br><span class="line">in languages with dynamic scope the name resolution depends upon the program</span><br><span class="line">state when the name is encountered which is determined by the execution context</span><br><span class="line">or calling context.</span><br></pre></td></tr></table></figure>
+<p>Let’s look at some examples, which might make the above explanation more
+concrete.</p>
+<pre><code>public class Test &#123;
+    static int x = 1;
+
+    static void g() &#123;
+        System.out.println(x);
+        x = 2;
+    &#125;
+
+    static void f() &#123;
+        int x = 3;
+        g();
+    &#125;
+
+    public static void main(String[] args) &#123;
+        f();
+        System.out.println(x);
+    &#125;
+&#125;
+</code></pre>
+<p>This Java program prints ‘1’ and ‘2’.</p>
+<pre><code>using System.IO;
+using System;
+
+class Program
+&#123;
+    static int x = 1;
+
+    static void g() &#123;
+        Console.WriteLine(x);
+        x = 2;
+    &#125;
+
+    static void f() &#123;
+        int x = 3;
+        g();
+    &#125;
+
+    static void Main() &#123;
+        f();
+        Console.WriteLine(x);
+    &#125;
+&#125;
+</code></pre>
+<p>This C# program prints <code>1</code> and <code>2</code>.</p>
+<pre><code>print = console.log
+var x = 1;
+function g() &#123; print(x); x = 2;&#125;
+function f() &#123; var x=3; g();&#125;
+
+f();
+print(x);
+</code></pre>
+<p>This JavaScript program prints <code>1</code> and <code>2</code>.</p>
+<pre><code>x=1
+function g () &#123; echo $x ; x=2 ; &#125;
+function f () &#123; local x=3 ; g ; &#125;
+f
+echo $x
+</code></pre>
+<p>This Bash program prints <code>3</code> and <code>1</code>.</p>
+<p>Most PL uses lexical scope, fortunately.</p>
+<h2 id="Closure"><a class="header-anchor" href="#Closure">§</a>Closure</h2>
+<p>Even if the rule for scoping is defined, there would still be different
+interpretation on the <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Closure_%28computer_programming%29#Lexical_environment">lexical
+environment</a>
+for closures.</p>
+<p>In some PL, variables are captured “by value”, eg. Java, while in some other PLs,
+variables are captured “by reference”, such as C# and JavaScript.</p>
+<pre><code>public class HelloWorld &#123;
+     public static void main(String []args)&#123;
+        int x = 0;
+        Runnable r = () -&gt; System.out.println(x);
+        x = 1;
+        r.run();
+     &#125;
+&#125;
+</code></pre>
+<p>This Java program doesn’t compile, for the variable accessed inside the closure
+is not final or effectively final.</p>
+<pre><code>using System.IO;
+using System;
+
+class Program
+&#123;
+    static void Main() &#123;
+        var x = 0;
+        Func&lt;int,int&gt; f = y =&gt; x + y;
+        x = 1;
+        Console.WriteLine(f(1));
+    &#125;
+&#125;
+</code></pre>
+<p>This C# program prints <code>2</code>.</p>
+<pre><code>print = console.log
+x = 0
+
+f = -&gt;
+    print x
+
+x = 1
+
+f()
+</code></pre>
+<p>This CoffeeScript program prints <code>2</code>.</p>
+<h2 id="Reference"><a class="header-anchor" href="#Reference">§</a>Reference</h2>
+<p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/16220698/i-thought-c-sharp-has-lexical-scoping-but-why-this-example-shows-dynamic-scopin">Stackoverflow
+CSharp</a></p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

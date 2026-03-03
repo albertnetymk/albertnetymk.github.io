@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="A Good Day to Play Ping-Pong"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2022/12/20/pingpong/"/>
+
+
+<meta name="description" content="Implementing the ping-pong program in Erlang, C++ and Java. §Erlang 123456789101112131415161718192021222324252627282930313233343536-module(pingpong).-mode(compile).-compile(export_all).-compile(nowarn">
+<meta property="og:type" content="article">
+<meta property="og:title" content="A Good Day to Play Ping-Pong">
+<meta property="og:url" content="https://albertnetymk.github.io/2022/12/20/pingpong/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Implementing the ping-pong program in Erlang, C++ and Java. §Erlang 123456789101112131415161718192021222324252627282930313233343536-module(pingpong).-mode(compile).-compile(export_all).-compile(nowarn">
+<meta property="og:locale">
+<meta property="article:published_time" content="2022-12-19T23:32:58.000Z">
+<meta property="article:modified_time" content="2022-12-27T20:54:19.373Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> A Good Day to Play Ping-Pong - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          A Good Day to Play Ping-Pong
+        
+      </h1>
+
+      <time class="post-time">
+          Dec 20 2022
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Implementing the ping-pong program in Erlang, C++ and Java.</p>
+<h2 id="Erlang"><a class="header-anchor" href="#Erlang">§</a>Erlang</h2>
+<figure class="highlight erlang"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">-module</span><span class="params">(pingpong)</span>.</span><br><span class="line">-mode<span class="params">(compile)</span>.</span><br><span class="line"><span class="keyword">-compile</span><span class="params">(export_all)</span>.</span><br><span class="line"><span class="keyword">-compile</span><span class="params">(nowarn_export_all)</span>.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">send_msg</span><span class="params">(ID, Msg)</span> -&gt;</span></span><br><span class="line">  Msg,</span><br><span class="line">  <span class="comment">% io:format(&quot;~p~n&quot;, [Msg]),</span></span><br><span class="line">  ID ! &#123;self()&#125;,</span><br><span class="line">  ok.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">pong</span><span class="params">(<span class="number">0</span>)</span> -&gt;</span></span><br><span class="line">  ok;</span><br><span class="line"><span class="function"><span class="title">pong</span><span class="params">(N)</span> -&gt;</span></span><br><span class="line">  <span class="keyword">receive</span> &#123;PingID&#125; -&gt;</span><br><span class="line">    send_msg(PingID, <span class="string">&quot;Pong&quot;</span>),</span><br><span class="line">    pong(N-<span class="number">1</span>)</span><br><span class="line">  <span class="keyword">end</span>.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">ping</span><span class="params">(_, <span class="number">0</span>)</span> -&gt;</span></span><br><span class="line">  ok;</span><br><span class="line"><span class="function"><span class="title">ping</span><span class="params">(PongID, N)</span> -&gt;</span></span><br><span class="line">  send_msg(PongID, <span class="string">&quot;Ping&quot;</span>),</span><br><span class="line">  <span class="keyword">receive</span> _ -&gt;</span><br><span class="line">    ping(PongID, N-<span class="number">1</span>)</span><br><span class="line">  <span class="keyword">end</span>.</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="title">main</span><span class="params">(_)</span> -&gt;</span></span><br><span class="line">  MaxCount = <span class="number">20000</span>,</span><br><span class="line">  PongID = spawn(?MODULE, pong, [MaxCount]),</span><br><span class="line">  T1 = erlang:monotonic_time(),</span><br><span class="line">  ping(PongID, MaxCount),</span><br><span class="line">  T2 = erlang:monotonic_time(),</span><br><span class="line">  Time = erlang:convert_time_unit(T2 - T1, native, microsecond),</span><br><span class="line">  io:format(<span class="string">&quot;Elapsed time: ~p ms~n&quot;</span>, [Time / <span class="number">1000</span>]),</span><br><span class="line">  ok.</span><br></pre></td></tr></table></figure>
+<p>Running using a single CPU or two logical CPUs belonging to the same core. (Had to specify <code>+S</code>; otherwise it creates
+too many scheduler threads.)</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">erlc pingpong.erl &amp;&amp; taskset -c 0   erl +S 1 -<span class="built_in">eval</span> <span class="string">&quot;pingpong:main(1), halt().&quot;</span> -noshell</span></span><br><span class="line">Elapsed time: 21.66 ms</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">erlc pingpong.erl &amp;&amp; taskset -c 0,6 erl +S 2 -<span class="built_in">eval</span> <span class="string">&quot;pingpong:main(1), halt().&quot;</span> -noshell</span></span><br><span class="line">Elapsed time: 21.071 ms</span><br></pre></td></tr></table></figure>
+<h2 id="C"><a class="header-anchor" href="#C">§</a>C++</h2>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;thread&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;semaphore&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;chrono&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/resource.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">MBox</span> &#123;</span><br><span class="line">    binary_semaphore s&#123;<span class="number">0</span>&#125;;</span><br><span class="line">    <span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">put</span><span class="params">(string msg)</span> </span>&#123;</span><br><span class="line">        <span class="comment">// cout &lt;&lt; msg &lt;&lt; endl;</span></span><br><span class="line">        s.<span class="built_in">release</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="type">void</span> <span class="title">get</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        s.<span class="built_in">acquire</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">MBox ping_mbox;</span><br><span class="line">MBox pong_mbox;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">int</span> max_count = <span class="number">20000</span>;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">pong_runnable</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> i = <span class="number">0</span>; i &lt; max_count; ++i) &#123;</span><br><span class="line">        pong_mbox.<span class="built_in">get</span>();</span><br><span class="line">        ping_mbox.<span class="built_in">put</span>(<span class="string">&quot;Pong&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="function">thread <span class="title">pong_worker</span><span class="params">(pong_runnable)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> start = chrono::steady_clock::<span class="built_in">now</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> i = <span class="number">0</span>; i &lt; max_count; ++i) &#123;</span><br><span class="line">        pong_mbox.<span class="built_in">put</span>(<span class="string">&quot;Ping&quot;</span>);</span><br><span class="line">        ping_mbox.<span class="built_in">get</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> end = chrono::steady_clock::<span class="built_in">now</span>();</span><br><span class="line">    <span class="comment">// the final `get` is blocking, so waiting for child thread outside measurement window</span></span><br><span class="line">    pong_worker.<span class="built_in">join</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> time_ms = chrono::<span class="built_in">duration_cast</span>&lt;chrono::microseconds&gt;(end - start).<span class="built_in">count</span>() / <span class="number">1000.0</span>;</span><br><span class="line"></span><br><span class="line">    cout &lt;&lt; <span class="string">&quot;Elapsed time: &quot;</span> &lt;&lt; time_ms &lt;&lt; <span class="string">&quot; ms&quot;</span> &lt;&lt; endl;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// struct rusage ru;</span></span><br><span class="line">    <span class="comment">// if (getrusage(RUSAGE_SELF, &amp;ru)) &#123;</span></span><br><span class="line">    <span class="comment">//     perror(&quot;getrusage&quot;);</span></span><br><span class="line">    <span class="comment">// &#125; else &#123;</span></span><br><span class="line">    <span class="comment">//     printf(&quot;    voluntary switches = %ld\n&quot;, ru.ru_nvcsw);</span></span><br><span class="line">    <span class="comment">//     printf(&quot;  involuntary switches = %ld\n&quot;, ru.ru_nivcsw);</span></span><br><span class="line">    <span class="comment">// &#125;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">clang++ -O -std=c++20 pingpong.cpp &amp;&amp; taskset -c 0   ./a.out</span></span><br><span class="line">Elapsed time: 69.05 ms</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">clang++ -O -std=c++20 pingpong.cpp &amp;&amp; taskset -c 0,6 ./a.out</span></span><br><span class="line">Elapsed time: 6.558 ms</span><br></pre></td></tr></table></figure>
+<h2 id="Java"><a class="header-anchor" href="#Java">§</a>Java</h2>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.concurrent.Semaphore;</span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">pingpong</span> &#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">boolean</span> <span class="variable">use_vthread</span> <span class="operator">=</span> <span class="literal">false</span>;</span><br><span class="line">    <span class="comment">// final static boolean use_vthread = true;</span></span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">static</span> <span class="type">int</span> <span class="variable">max_count</span> <span class="operator">=</span> <span class="number">20000</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">class</span> <span class="title class_">MBox</span> &#123;</span><br><span class="line">        <span class="keyword">private</span> <span class="keyword">final</span> <span class="type">Semaphore</span> <span class="variable">s</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Semaphore</span>(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">void</span> <span class="title function_">put</span><span class="params">(String msg)</span> &#123;</span><br><span class="line">            <span class="comment">// System.out.println(msg);</span></span><br><span class="line">            s.release();</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">void</span> <span class="title function_">get</span><span class="params">()</span> &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                s.acquire();</span><br><span class="line">            &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                e.printStackTrace();</span><br><span class="line">                <span class="keyword">return</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">MBox</span> <span class="variable">ping_mbox</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MBox</span>();</span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">final</span> <span class="type">MBox</span> <span class="variable">pong_mbox</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">MBox</span>();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">launch_pong</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="type">Runnable</span> <span class="variable">r</span> <span class="operator">=</span> () -&gt; &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; max_count; i++) &#123;</span><br><span class="line">                pong_mbox.get();</span><br><span class="line">                ping_mbox.put(<span class="string">&quot;Pong&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (use_vthread) &#123;</span><br><span class="line">            Thread.startVirtualThread(r);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">Thread</span>(r).start();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">run_ping</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        <span class="type">Runnable</span> <span class="variable">r</span> <span class="operator">=</span> () -&gt; &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; max_count; i++) &#123;</span><br><span class="line">                pong_mbox.put(<span class="string">&quot;Ping&quot;</span>);</span><br><span class="line">                ping_mbox.get();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (use_vthread) &#123;</span><br><span class="line">            Thread.startVirtualThread(r).join();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            r.run();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">warmup</span><span class="params">()</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">var</span> i=<span class="number">0</span>; i&lt;<span class="number">10</span>; ++i) &#123;</span><br><span class="line">            launch_pong();</span><br><span class="line">            run_ping();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        warmup();</span><br><span class="line">        launch_pong();</span><br><span class="line"></span><br><span class="line">        <span class="type">long</span> <span class="variable">start</span> <span class="operator">=</span> System.nanoTime();</span><br><span class="line">        run_ping();</span><br><span class="line">        <span class="type">long</span> <span class="variable">end</span> <span class="operator">=</span> System.nanoTime();</span><br><span class="line"></span><br><span class="line">        <span class="type">long</span> <span class="variable">timeElapsed</span> <span class="operator">=</span> end - start;</span><br><span class="line">        System.out.printf(<span class="string">&quot;Elapsed time: %.3f ms\n&quot;</span>, timeElapsed / <span class="number">1_000_000.0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Using OS threads:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">taskset -c 0   java --enable-preview --<span class="built_in">source</span> 19 pingpong.java</span></span><br><span class="line">Elapsed time: 64.085 ms</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">taskset -c 0,6 java --enable-preview --<span class="built_in">source</span> 19 pingpong.java</span></span><br><span class="line">Elapsed time: 114.891 ms</span><br></pre></td></tr></table></figure>
+<p>Using virtual (green) threads:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">taskset -c 0   java --enable-preview --<span class="built_in">source</span> 19 pingpong.java</span></span><br><span class="line">Elapsed time: 18.058 ms</span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">taskset -c 0,6 java --enable-preview --<span class="built_in">source</span> 19 pingpong.java</span></span><br><span class="line">Elapsed time: 66.210 ms</span><br></pre></td></tr></table></figure>
+<h2 id="Conclusion"><a class="header-anchor" href="#Conclusion">§</a>Conclusion</h2>
+<p>Grouping all results in a table:</p>
+<table>
+<thead>
+<tr>
+<th>Lang/Runtime</th>
+<th style="text-align:right">Elapsed time on single CPU</th>
+<th style="text-align:right">Elapsed time on 2 CPUs (same core)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Erlang</td>
+<td style="text-align:right">21.66</td>
+<td style="text-align:right">21.071</td>
+</tr>
+<tr>
+<td>C++</td>
+<td style="text-align:right">69.05</td>
+<td style="text-align:right">6.558</td>
+</tr>
+<tr>
+<td>Java</td>
+<td style="text-align:right">64.085</td>
+<td style="text-align:right">114.891</td>
+</tr>
+<tr>
+<td>Java (vthread)</td>
+<td style="text-align:right">18.058</td>
+<td style="text-align:right">66.210</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>C++ and Java have on-par peak performance on a single core: 69ms vs 64ms</li>
+<li>JVM has poor support for SMP: using more CPU has detrimental effect, 64ms -&gt; 114ms and 18 -&gt; 66ms</li>
+<li>Java Virtual Threads and Erlang show that user-mode context switching is much cheaper: 18ms/21ms vs 64ms/69ms</li>
+<li>C++ thread context switching has better scalability: 69ms -&gt; 6ms; using <code>getrusage</code> one can see the #context switches
+drops significantly.</li>
+</ul>
+<h2 id="ENV"><a class="header-anchor" href="#ENV">§</a>ENV</h2>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">Erlang      : 25</span><br><span class="line">Clang       : 14</span><br><span class="line">Java        : 19</span><br><span class="line">Linux       : 5.10</span><br><span class="line">OS          : Debian 11.6</span><br><span class="line">#CPU        : 12 (6 cores)</span><br><span class="line">CPU         : Intel(R) Core(TM) i7-9850H CPU @ 2.60GHz</span><br><span class="line">Turbo boost : off</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

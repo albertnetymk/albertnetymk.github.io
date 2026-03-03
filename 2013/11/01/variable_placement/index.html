@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Variable Placement in C"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2013/11/01/variable_placement/"/>
+
+
+<meta name="description" content="Talk is cheap. Show me the code. – Geek  §Prelude 1int x section(&quot;.my_section&quot;); Given the above code, combined with one customized linking script, we could place x in one absolute address,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Variable Placement in C">
+<meta property="og:url" content="https://albertnetymk.github.io/2013/11/01/variable_placement/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Talk is cheap. Show me the code. – Geek  §Prelude 1int x section(&quot;.my_section&quot;); Given the above code, combined with one customized linking script, we could place x in one absolute address,">
+<meta property="og:locale">
+<meta property="article:published_time" content="2013-11-01T20:38:12.000Z">
+<meta property="article:modified_time" content="2020-06-06T11:32:16.363Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Variable Placement in C - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Variable Placement in C
+        
+      </h1>
+
+      <time class="post-time">
+          Nov 1 2013
+      </time>
+    </header>
+
+    <div class="post-content">
+    <blockquote>
+<p>Talk is cheap. Show me the code. – Geek</p>
+</blockquote>
+<h2 id="Prelude"><a class="header-anchor" href="#Prelude">§</a>Prelude</h2>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x <span class="title function_">section</span><span class="params">(<span class="string">&quot;.my_section&quot;</span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>Given the above code, combined with one customized linking script, we could place <code>x</code> in one absolute address, which is indeed the intention. As the
+program grows larger, I want to introduce another variable in the same section, so I did the most natural thing:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="type">int</span> x <span class="title function_">section</span><span class="params">(<span class="string">&quot;.my_section&quot;</span>)</span>;</span><br><span class="line"><span class="type">int</span> y <span class="title function_">section</span><span class="params">(<span class="string">&quot;.my_section&quot;</span>)</span>;</span><br></pre></td></tr></table></figure>
+<p>As I anticipated, everything works OK. That should be the end of the story, I didn’t continue working on it for almost another half year. The problem
+is that the application crashes when I use gcc <code>-Os</code> optimization. I have never shown as much interest in faster code as I did in readable code, so I
+didn’t pay much attention to it. (Maybe the compiler did some wrong optimization.)</p>
+<h2 id="Thunder-storm"><a class="header-anchor" href="#Thunder-storm">§</a>Thunder storm</h2>
+<p>I have always disable optimization (-O0) after realizing optimization doesn’t work, until I was stuck in the work place due to a thunder storm. I have
+nothing interesting to do but to dig it out who’s the culprit. I used a simple but effective method to narrow down the scope, binary search.
+Considering that there’s a few hundred object files after compiling, it’s silly to inspect them one by one. (Might have to do this, if one’s not
+lucky.) I build the application twice, one (alpha) for ‘-O0’, the other (beta) ‘-O3’, verifying alpha works OK and beta fails. Next, pick some object
+files from alpha set and replace the corresponding ones in beta. Finally, link them to obtain the final executable, and see how it works. If one’s
+lucky, it’s possible to narrow down the culprit efficiently. I would consider myself lucky, for it took me 15 mins.</p>
+<h2 id="Culprit-and-Solution"><a class="header-anchor" href="#Culprit-and-Solution">§</a>Culprit and Solution</h2>
+<p>The reason why application fails after optimization is the order <code>x</code> and <code>y</code> is not preserved (swapped in this case). My expectation was that variable
+placement in one section has no strict relation to how it’s mapped to memory. (Preserving the order is just one option, the default one.) Since it’s
+required by C standard, compilers can do anything it needs to make the code faster. Therefore, the application, which relies on <code>x</code> being placed at
+the absolute address, fails mysteriously.</p>
+<p>I then spent almost two hours trying to find one solution for this. Unfortunately, my luck ran out, and the only thing I could find is do use one
+structure to preserve the ordering:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">mystruct_s</span> &#123;</span></span><br><span class="line">    <span class="type">int</span> x;</span><br><span class="line">    <span class="type">int</span> y;</span><br><span class="line">&#125; mystruct;</span><br><span class="line">mystruct z <span class="title function_">section</span><span class="params">(<span class="string">&quot;.my_section&quot;</span>)</span>;</span><br></pre></td></tr></table></figure>
+<h2 id="Conclusion"><a class="header-anchor" href="#Conclusion">§</a>Conclusion</h2>
+<p>C language doesn’t enforce variable layout within one section. Instead, the easiest way would be using one structure, if one doesn’t want to fiddle
+with linking scripts.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

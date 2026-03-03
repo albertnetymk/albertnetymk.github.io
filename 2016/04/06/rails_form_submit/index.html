@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Rails Form Submit"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2016/04/06/rails_form_submit/"/>
+
+
+<meta name="description" content="I started using Ruby on Rails around four years ago, but I usually just played with trivial examples, and never really dived into it. Now that I am developing something not-so-trivial, it’s good oppor">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rails Form Submit">
+<meta property="og:url" content="https://albertnetymk.github.io/2016/04/06/rails_form_submit/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="I started using Ruby on Rails around four years ago, but I usually just played with trivial examples, and never really dived into it. Now that I am developing something not-so-trivial, it’s good oppor">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-04-06T20:26:26.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Rails Form Submit - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Rails Form Submit
+        
+      </h1>
+
+      <time class="post-time">
+          Apr 6 2016
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>I started using Ruby on Rails around four years ago, but I usually just played with trivial examples, and never really dived into it. Now that I am
+developing something not-so-trivial, it’s good opportunity to really understand the concept, instead of walking around it all the time.</p>
+<p>The problem I would like to discuss in this post is form submission. Using Rails resource generator, we could get complete CRUD for a model, and it
+works out of the box, but it’s a black box. This time, let’s create part of it manually to gain some insight.</p>
+<pre><code>rails new form_submit
+cd form_submit
+bundle
+rails g controller home edit
+</code></pre>
+<p>We wouldn’t use rails model generator, so we just create a <code>activemodel</code> compatible model.</p>
+<p>module HomeHelper
+class UserModel
+include ActiveModel::Model
+attr_accessor :name, :age
+end
+end</p>
+<p>In the <code>edit</code> action, we would instantiate an object of that model, and pass it to the view.</p>
+<p>include HomeHelper</p>
+<p>def edit
+@user = UserModel.new(
+name: ‘albert’,
+age: 30
+)
+end</p>
+<p>The view contains a form, and looks like the following. The <code>as</code> part would show itself when we look at the submitted data.</p>
+<p>%h1 Home#edit</p>
+<p>= simple_form_for @user, as: :user_model, url: ‘’ do |f|
+= f.input :name
+= f.input :age, collection: 18…60</p>
+<pre><code>= f.submit 'Save'
+</code></pre>
+<p>Add one more method <code>update</code> in <code>home</code> controller to handle form submission, and adding the rule for that in the routing file.</p>
+<p>def update
+redirect_to action: :edit #since we don’t know what to write here for now
+end</p>
+<h1>config/routes.rb</h1>
+<p>post ‘home/edit’, to: ‘home#update’</p>
+<p>If we test this in the browser, and try to submit the form, we could see the submitted data in the console, something like:</p>
+<p>Parameters: { … “user_model”=&gt;{“name”=&gt;“albert”, “age”=&gt;“30”}, “commit”=&gt;“Save”}</p>
+<p>We could construct the model using the submitted data, and render it using the <code>edit</code> view. Just for fun, we would increment the <code>age</code> value. Since
+the model is not backed up by a table in database, its type is unknown; hence the string to integer conversion.</p>
+<p>def update
+@user = UserModel.new(params[:user_model])
+@user.age = @user.age.to_i + 1
+render :edit
+end</p>
+<p>The conversion is not needed if this model is an actual active model. In fact, let’s see how much needs to be changed, if we replace the model with a
+real active model.</p>
+<p>rails g model User name:string age:integer
+rake db:migrate</p>
+<p>Actions in the controller need to be updated to use the new model. The conversion is not needed, for its type is specified when we create the model.
+In addition, the <code>key</code> in submitted data becomes <code>:user</code>, which is corresponding to the model name. At last, we need to permit fields meant to be
+updated explicitly because of <a target="_blank" rel="noopener" href="http://edgeapi.rubyonrails.org/classes/ActionController/StrongParameters.html">Strong Parameters</a></p>
+<p>def edit
+@user = User.new(
+name: ‘albert’,
+age: 30
+)
+end</p>
+<p>def update
+@user = User.new(params.require(:user).permit(:name, :age))
+@user.age = @user.age + 1
+render :edit
+end</p>
+<p>So is the view:</p>
+<p>= simple_form_for @user, url: ‘’ do |f|
+= f.input :name
+= f.input :age, collection: 18…60</p>
+<pre><code>= f.submit 'Save'
+</code></pre>
+<p>The complete code is available <a target="_blank" rel="noopener" href="https://github.com/albertnetymk/rails_form_submit">here</a></p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Job-seeking Summary in 2013"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2014/03/23/jobs_2013/"/>
+
+
+<meta name="description" content="This post marks the end of my 2013 job seeking, and tries to denote the process after getting the letters from the companies showing interest. The following list contains all the companies (not sure t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Job-seeking Summary in 2013">
+<meta property="og:url" content="https://albertnetymk.github.io/2014/03/23/jobs_2013/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="This post marks the end of my 2013 job seeking, and tries to denote the process after getting the letters from the companies showing interest. The following list contains all the companies (not sure t">
+<meta property="og:locale">
+<meta property="article:published_time" content="2014-03-23T11:40:03.000Z">
+<meta property="article:modified_time" content="2020-10-10T17:42:04.103Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Job-seeking Summary in 2013 - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Job-seeking Summary in 2013
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 23 2014
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>This post marks the end of my 2013 job seeking, and tries to denote the process
+after getting the letters from the companies showing interest.</p>
+<p>The following list contains all the companies (not sure they want to reveal
+their identity, so using the city name to represent them) from which I receive
+one non-rejection letter (not in chronological order):</p>
+<h2 id="Stockholm"><a class="header-anchor" href="#Stockholm">§</a>Stockholm</h2>
+<p>It’s about embedded system optimization, which, to some extent, is
+quite close to what I study, so I was excited to hear from it. Firstly, one
+phone interview is done (with one developer), mainly about myself. Secondly, one
+Skype interview is held, during which two problem (low level programming) is
+asked, and I am supposed to implement them using C. Fairly simple, merely ten
+SLOC for each of them. Thirdly, they broadcast one email to all the candidates
+on one optimization problem (optimize one C++ program). I had to admit that
+optimization is the least I am adept to, so it took me a while to submit some
+meaningful answer. The following is partial part of the email I sent to the
+company.</p>
+<blockquote>
+<p>Two major changes to original implementation:</p>
+<ul>
+<li>
+<p>move invariant part outside of the loop.</p>
+</li>
+<li>
+<p>favor int over other types for local variables.</p>
+</li>
+</ul>
+<p>No huge improvement, so resort to g++ to find out which optimizer is doing the
+actual work.</p>
+<p>The three optimizer introduce the most improvement.</p>
+<p>-fmove-loop-invariants
+-ftree-ch
+-fomit-frame-pointer</p>
+<p>The first could be, more or less, implemented by hand, and that’s basically the
+first change we mentioned.</p>
+<p>The second is too advanced for me to understand. Still no idea what it’s about
+after reading the gcc doc.</p>
+<p>The third one is related to calling this function, so, maybe, it’s unrelated to
+optimization inside the function.</p>
+</blockquote>
+<p>Since then, I had heard anything from them for a while, and I almost thought I
+failed it. However, I suddenly received one email from the HR in the company,
+with two tests, one for matrigma test, the other personality test. I finished
+both, and had one interview with the HR and the developer together. As it turned
+out, I did one good job on the matrigma test, but the personality test is a bit
+disappointing, so they ask me to do it again for the personality after the
+interview. I did the personality test again (the identical questions in the
+test), and submit the result 20 mins after the interview is finished. Then, I
+never heard anything from this company.</p>
+<h3 id="Analysis"><a class="header-anchor" href="#Analysis">§</a>Analysis</h3>
+<p>I may posed one lazy person image during the final interview, for I mentioned
+that I had strict schedule during my college, and the first year in Sweden, but
+not recently. (Maybe, I was trying to tell them everything about me. Probably, I
+should tone down the dramatic change.)</p>
+<h2 id="Lund"><a class="header-anchor" href="#Lund">§</a>Lund</h2>
+<p>It’s one auto testing job using Python. Firstly, one phone interview during
+which I asked some questions about the testing process and code quality related
+issue in addition to some introduction about myself. Secondly, one coding test;
+they send me one problem description, and ask the candidate to implement it
+using any language they like. It’s related to bit masking, so C is the best
+choice to my knowledge. Original, I was told that I have four hours to finish
+it, and I was a bit nervous that I may not be able to make it on time. As it
+turned out, it’s not so difficult. I think it’s OK to show the solution in
+public <a target="_blank" rel="noopener" href="https://gist.github.com/albertnetymk/8300148">domain</a>(Just want to show
+the simplicity.).</p>
+<p>Thirdly, I got one in person interview in their office. (I arrive Lund 20 mins
+earlier than the agreed time (11:00), but it took me around half an hour to
+locate the entrance to that company. I asked the people on that street, but no
+one has heard of that company. When I lost my hope, and started wandering on
+that street, I suddenly saw the logo of that company on one tiny door. Then, I
+rang the door bell, and we got in the interview after my apologizing.) They
+asked me to say a few words about my bachelor and master thesis project, even
+though it’s not so related to this position. Then, they (one man and one woman,
+both developers) introduced the architecture of the whole system in one very
+high level. As time is approaching 12:00, I was expecting one lunch provided by
+them, they left me in the conference room with one exam, and asked me to
+finished it within one hour. I was outrageous for a moment, but resist the
+temptation to leave room immediately, for they said I would be reimbursed for my
+travel, but I hadn’t got the instruction how I would get the money. I finished
+that exam as soon as possible while being angry. (Use <a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Sieve_of_Eratosthenes">Sieve of
+Eratosthenes</a> implemented in
+Haskell for the prime question in the test to express my dissatisfaction on
+their treatment to me.) The test was finished at 12:40, 20 mins earlier. I went
+out to look the male developer (he’s the lead developer, I think), and he
+received my answer, and direct me to the HR downstairs.</p>
+<p>The conversation with HR was fairly short (around 15 mins), since I don’t know
+what I should ask. She understood my situation that I haven’t had any full time
+working experience, and explained what people usually ask during this process,
+such as paid holidays, salary improvement annually, etc. (She’s really one good
+person, and I felt very comfortable talking with her.) Then, she gave me one
+envelop to hold the recipes of the train tickets so that I can get the
+reimbursement afterwards. The envelop is well prepared with the address and
+postage stamp, and all I need to do is to put the two recipes into the envelop,
+seal it, and drop it into one mailbox. I said goodbye and left the office. I had
+to get something to eat, since they didn’t buy me anything. Damn it. (Maybe,
+this is the cultural difference between China and Sweden. In China, having meals
+together is very important social means, and is how most business cooperation is
+done. However, in Sweden, people don’t pay enough attention on meals.)</p>
+<h3 id="Analysis-2"><a class="header-anchor" href="#Analysis-2">§</a>Analysis</h3>
+<p>I got the offer from this company, around 32,000 SEK per month. I would have
+accepted if I hadn’t said yes to the PhD program earlier.</p>
+<p>I still haven’t received the reimbursement for my travel so far…</p>
+<h2 id="Singapore"><a class="header-anchor" href="#Singapore">§</a>Singapore</h2>
+<p>I notice this company because of Jim Weirich’s presentation on <a href="www.youtube.com/watch?v=FITJMJjASUs">Y
+combinator</a>, from which I gained deep
+understanding on Y combinator. It turns out Jim is working in this company, and
+it became one of companies I want to go. I didn’t send out the application until
+I heard one episode from <a href="teahour.fm">teahour</a>, in which, one employee of this
+company depicted the life in this company. I was really intrigued, so I sent one
+application containing how found this company along with my resume.</p>
+<p>Then, I got one email saying they would like to have one remote pair
+programming. The test is really simple, implementing one Set using TDD. There
+were no advanced tricks; in fact, my partner emphasized a lot on code
+readability, which I am really admire. I didn’t think I did one good job at all,
+but he said he’s more or less satisfied with the process, and would arrange
+another one when I got back to China, for the next one will last for four hours.</p>
+<p>The second pairing happens a fews weeks after I arrived in China. In this
+session, I was supposed to write some code as well, instead of talking only as I
+did in the first pairing session. However, due to the poor connection, and
+the huge difference between his and my VIM configuration, I was almost
+crawling when it’s my turn. I guess that he could not stand the slow speed and
+agreed to type, and allowed me to only give command. This improved the
+productivity significantly, and allowed us to finish the problem (<a target="_blank" rel="noopener" href="http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life">Game of
+Life</a>) on time.</p>
+<h3 id="Analysis-3"><a class="header-anchor" href="#Analysis-3">§</a>Analysis</h3>
+<p>Clearly, there’s huge difference in productivity between us. I am really slow,
+so I was not surprised that I hadn’t heard anything from him so far. I guess I
+am not good enough to write real world programs. So sad.</p>
+<h2 id="Shanghai"><a class="header-anchor" href="#Shanghai">§</a>Shanghai</h2>
+<p>It’s one internship on LLVM backend of GCC. I got the news from one friend
+working in SH. Didn’t expect to receive anything from them, since they ask for
+one master student studying in university now, and graduate in 2015. I was
+graduate already, so doesn’t match their criteria at all. Still, they provide
+one phone interview chance for me. (The voice of the HR is very beautiful; I got
+the phone call at 9:00 Sweden time, and was sleeping still.)</p>
+<p>This one is the first interview I had for full time job, and it turned out to be
+one disaster. I can still remember two questions vividly after so long, for I
+believe these are the ultimate questions for candidates, which could draw one
+clear line to distinguish outstanding candidates from mediocre ones. I put my
+answers as one amusement the audience.</p>
+<p>Q: Please describe your working with GCC?
+A: I use GCC to compile my C project everyday.</p>
+<p>Q: Please describe your contribution to GCC development or open source project?
+How many SLOC to GCC?
+A: Just some issues on Github, but not so much SLOC contribution.</p>
+<h3 id="Analysis-4"><a class="header-anchor" href="#Analysis-4">§</a>Analysis</h3>
+<p>I don’t have the expertise to do this one, so nothing regretted.</p>
+<h2 id="Karlskrona"><a class="header-anchor" href="#Karlskrona">§</a>Karlskrona</h2>
+<p>I believe the first full time job application is sent to this company, and I
+have sent out countless applications to this company in 2013. I think 30 out of
+50 total applications went to this company, and this is the only time, I receive
+one non rejection letter. This is the last non rejection letter I received, for
+I stopped sending out applications after getting these five or six non rejection
+letters, believing I would definitely get one from them.</p>
+<p>Firstly, one Skype interview with the HR. Nothing surprising, very similar to
+the questions asked by HR in other companies. One classical question is: what do
+you think you would become in five years. My response on hearing is for the
+first time is I don’t know, because I really don’t know what I would become, and
+I don’t know if I would be working in the same company for five years, if I am
+suited to full time working in one IT company. It’s just too many uncertainties.
+Then my parents convinced me that it’s really one bad answer.</p>
+<p>They pointed out that I need to have two different mindset while talking with
+developers and HR people. Developers would like precise and accurate answers,
+and disapprove promises without solid evidence. On the other hand, HR people
+like passionate promises, which they believe shows how one’s strong motivations.
+I, as one developer mostly, was unaware of the HR world, made this serious
+mistake.</p>
+<p>Therefore, it’s OK to say some big words to the questions from HR, for it mainly
+reflects one’s passion and motivation. Anyway, the interview went OK, and she
+sent me one online test, with the comment that this test is really difficult,
+and some of their employees can only achieve 75% correct, so no need to feel
+discouraged if I didn’t do it well.</p>
+<p>The timer started counting down, after I clicked ‘Start’. I had to admit it’s
+indeed very hard, and for almost each question, I need to use Google. There are
+less then 40 questions totally, and it took me around one and half hour, so
+around less then 3 mins per question. My correct rate is 75%. Fancy that.</p>
+<p>I got one callback from her, and this company wants to meet me in person before
+giving me the offer. Unfortunately, I was about to leave Sweden, so I didn’t had
+the time to go there. Then, I declined this position because it’s mostly about
+enterprise Java development. Java is the last language I would like to work with
+in industry.</p>
+<h3 id="Analysis-5"><a class="header-anchor" href="#Analysis-5">§</a>Analysis</h3>
+<p>It at least completes one circle, starting my job seeking with this company, and
+suspended my job seeking process with this company indefinitely.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

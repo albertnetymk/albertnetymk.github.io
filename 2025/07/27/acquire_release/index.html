@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Observe acquire-release in assembly"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2025/07/27/acquire_release/"/>
+
+
+<meta name="description" content="Acquire-release (acq-rel) is a weaker memory model than sequential consistency (SC). This post illustrates how acq-rel allows more interleaving than SC through examples and assembly analysis. §Store b">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Observe acquire-release in assembly">
+<meta property="og:url" content="https://albertnetymk.github.io/2025/07/27/acquire_release/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Acquire-release (acq-rel) is a weaker memory model than sequential consistency (SC). This post illustrates how acq-rel allows more interleaving than SC through examples and assembly analysis. §Store b">
+<meta property="og:locale">
+<meta property="article:published_time" content="2025-07-27T12:15:08.000Z">
+<meta property="article:modified_time" content="2025-07-30T16:37:31.738Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Observe acquire-release in assembly - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Observe acquire-release in assembly
+        
+      </h1>
+
+      <time class="post-time">
+          Jul 27 2025
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Acquire-release (acq-rel) is a weaker memory model than sequential consistency (SC). This post illustrates how acq-rel
+allows more interleaving than SC through examples and assembly analysis.</p>
+<h2 id="Store-buffer"><a class="header-anchor" href="#Store-buffer">§</a>Store buffer</h2>
+<p>A store buffer is a per-CPU buffer that holds pending stores before they are committed to main memory and visible to other CPUs.
+Within a CPU, operations follow program order, but store buffers can cause surprising behaviors in multi-core environments.</p>
+<p>This is demonstrated using a litmus test.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">C store-buffer</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">[x] = 0;</span><br><span class="line">[y] = 0;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">P0 (atomic_int* x, atomic_int* y) &#123;</span><br><span class="line">  atomic_store_explicit(x, 1, memory_order_release);</span><br><span class="line">  r0 = atomic_load_explicit(y, memory_order_acquire);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">P1 (atomic_int* x, atomic_int* y) &#123;</span><br><span class="line">  atomic_store_explicit(y, 1, memory_order_release);</span><br><span class="line">  r0 = atomic_load_explicit(x, memory_order_acquire);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">exists</span><br><span class="line">(  true</span><br><span class="line">/\ 0:r0 == 0</span><br><span class="line">/\ 1:r0 == 0</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+<p>Running <code>herd7 -c11 -cat rc11.cat storebuffer.litmus</code> produces:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Ok</span><br><span class="line">Witnesses</span><br><span class="line">Positive: 1 Negative: 3</span><br></pre></td></tr></table></figure>
+<p>The result shows that writes to <code>x</code> and <code>y</code> can be held in store buffers, making them temporarily invisible to other
+CPUs. This behavior is not allowed under SC — verified by running the same test with <code>-cat sc.cat</code>.</p>
+<h2 id="Assembly"><a class="header-anchor" href="#Assembly">§</a>Assembly</h2>
+<p>Let’s examine the compiled assembly on two architectures.</p>
+<p>First, the C code:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdatomic.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;pthread.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">atomic_int</span> x = <span class="number">0</span>, y = <span class="number">0</span>;</span><br><span class="line"><span class="type">int</span> r1 = <span class="number">-1</span>, r2 = <span class="number">-1</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span>* <span class="title function_">thread0</span><span class="params">(<span class="type">void</span>* arg)</span> &#123;</span><br><span class="line">    atomic_store_explicit(&amp;x, <span class="number">1</span>, memory_order_release);</span><br><span class="line">    r1 = atomic_load_explicit(&amp;y, memory_order_acquire);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">void</span>* <span class="title function_">thread1</span><span class="params">(<span class="type">void</span>* arg)</span> &#123;</span><br><span class="line">    atomic_store_explicit(&amp;y, <span class="number">1</span>, memory_order_release);</span><br><span class="line">    r2 = atomic_load_explicit(&amp;x, memory_order_acquire);</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Since both threads follow the same logic, we only show one.</p>
+<h3 id="x64"><a class="header-anchor" href="#x64">§</a>x64</h3>
+<p>The corresponding assembly (with <code>-O</code>):</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">thread0:</span></span><br><span class="line">        <span class="keyword">mov</span>     <span class="built_in">dword</span> <span class="built_in">ptr</span> [<span class="built_in">rip</span> + x], <span class="number">1</span>      &lt;---------- store</span><br><span class="line">        <span class="keyword">mov</span>     <span class="built_in">eax</span>, <span class="built_in">dword</span> <span class="built_in">ptr</span> [<span class="built_in">rip</span> + y]    &lt;----------  load</span><br><span class="line">        <span class="keyword">mov</span>     <span class="built_in">dword</span> <span class="built_in">ptr</span> [<span class="built_in">rip</span> + <span class="built_in">r1</span>], <span class="built_in">eax</span></span><br><span class="line">        <span class="keyword">xor</span>     <span class="built_in">eax</span>, <span class="built_in">eax</span></span><br><span class="line">        <span class="keyword">ret</span></span><br></pre></td></tr></table></figure>
+<p>On x64, acq-rel compiles down to regular <code>mov</code> instructions.  That’s why acq-rel is often described as “free” on x64.
+But since x64 allows store-load reordering, the result <code>r1 = r2 = 0</code> can still occur.</p>
+<p>Using SC (<code>memory_order_seq_cst</code>), the compiler emits <code>xchg</code>, which flushes the store buffer, ensuring the store becomes
+visible to all CPUs.  This enforces sequential consistency.</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">thread0:</span></span><br><span class="line">        <span class="keyword">mov</span>     <span class="built_in">eax</span>, <span class="number">1</span></span><br><span class="line">        <span class="keyword">xchg</span>    <span class="built_in">dword</span> <span class="built_in">ptr</span> [<span class="built_in">rip</span> + x], <span class="built_in">eax</span>   &lt;----------- store + store-buffer flushing</span><br><span class="line">        <span class="keyword">mov</span>     <span class="built_in">eax</span>, <span class="built_in">dword</span> <span class="built_in">ptr</span> [<span class="built_in">rip</span> + y]   &lt;-----------  load</span><br><span class="line">        <span class="keyword">mov</span>     <span class="built_in">dword</span> <span class="built_in">ptr</span> [<span class="built_in">rip</span> + <span class="built_in">r1</span>], <span class="built_in">eax</span></span><br><span class="line">        <span class="keyword">xor</span>     <span class="built_in">eax</span>, <span class="built_in">eax</span></span><br><span class="line">        <span class="keyword">ret</span></span><br></pre></td></tr></table></figure>
+<h3 id="aarch64"><a class="header-anchor" href="#aarch64">§</a>aarch64</h3>
+<p>On ARM64 (compiled with <code>clang -O -march=armv8.6-a</code>), acq-rel generates <code>stlr</code> (store-release) and <code>ldapr</code> (load-acquire).
+These instructions include memory-ordering semantics and are more costly than regular <code>str</code> and <code>ldr</code>.</p>
+<figure class="highlight armasm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">thread0:</span></span><br><span class="line">        <span class="keyword">mov</span>     w8, <span class="number">#1</span></span><br><span class="line">        <span class="keyword">adrp</span>    x9, x</span><br><span class="line">        <span class="keyword">add</span>     x9, x9, :lo12:x</span><br><span class="line">        stlr    w8, [x9]                &lt;----------- store release</span><br><span class="line">        <span class="keyword">adrp</span>    x8, y</span><br><span class="line">        <span class="keyword">add</span>     x8, x8, :lo12:y</span><br><span class="line">        ldapr   w8, [x8]                &lt;------------ load acquire</span><br><span class="line">        <span class="keyword">adrp</span>    x9, <span class="built_in">r1</span></span><br><span class="line">        <span class="keyword">mov</span>     x0, xzr</span><br><span class="line">        <span class="keyword">str</span>     w8, [x9, :lo12:<span class="built_in">r1</span>]</span><br><span class="line">        ret</span><br></pre></td></tr></table></figure>
+<p>However, <code>ldapr</code> may still be reordered with respect to earlier stores. To prevent this and enforce SC semantics, the
+compiler uses <code>ldar</code> instead for <code>memory_order_seq_cst</code>.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">thread0:</span><br><span class="line">        mov     w8, #1</span><br><span class="line">        adrp    x9, x</span><br><span class="line">        add     x9, x9, :lo12:x</span><br><span class="line">        stlr    w8, [x9]               &lt;------------- store sc</span><br><span class="line">        adrp    x8, y</span><br><span class="line">        add     x8, x8, :lo12:y</span><br><span class="line">        ldar    w8, [x8]               &lt;-------------- load sc</span><br><span class="line">        adrp    x9, r1</span><br><span class="line">        mov     x0, xzr</span><br><span class="line">        str     w8, [x9, :lo12:r1]</span><br><span class="line">        ret</span><br></pre></td></tr></table></figure>
+<h2 id="Summary"><a class="header-anchor" href="#Summary">§</a>Summary</h2>
+<p>Acquire-release ordering allows certain instruction reorderings that sequential consistency does not.
+This difference shows up in:</p>
+<ul>
+<li>Litmus tests: acq-rel permits outcomes that SC forbids</li>
+<li>Assembly:
+<ul>
+<li>On x64: acq-rel uses <code>mov</code>, SC uses <code>xchg</code></li>
+<li>On aarch64: acq-rel uses <code>stlr</code>/<code>ldapr</code>, SC uses <code>stlr</code>/<code>ldar</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="References"><a class="header-anchor" href="#References">§</a>References</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/67397460/does-stlrb-provide-sequential-consistency-on-arm64">https://stackoverflow.com/questions/67397460/does-stlrb-provide-sequential-consistency-on-arm64</a></li>
+<li><a target="_blank" rel="noopener" href="https://community.arm.com/arm-community-blogs/b/tools-software-ides-blog/posts/armv8-sequential-consistency">https://community.arm.com/arm-community-blogs/b/tools-software-ides-blog/posts/armv8-sequential-consistency</a></li>
+<li><a target="_blank" rel="noopener" href="https://community.arm.com/arm-community-blogs/b/tools-software-ides-blog/posts/enabling-rcpc-in-gcc-and-llvm">https://community.arm.com/arm-community-blogs/b/tools-software-ides-blog/posts/enabling-rcpc-in-gcc-and-llvm</a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

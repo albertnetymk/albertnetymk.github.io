@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Voice Dictation via Voxtype"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2026/03/03/voxtype/"/>
+
+
+<meta name="description" content="I set up Voxtype on Debian to get local voice dictation that works reliably in terminal and GUI apps. This post is the exact setup I use. §Core config My main config lives at ~&#x2F;.config&#x2F;voxtype&#x2F;config.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Voice Dictation via Voxtype">
+<meta property="og:url" content="https://albertnetymk.github.io/2026/03/03/voxtype/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="I set up Voxtype on Debian to get local voice dictation that works reliably in terminal and GUI apps. This post is the exact setup I use. §Core config My main config lives at ~&#x2F;.config&#x2F;voxtype&#x2F;config.">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-03-03T13:12:29.000Z">
+<meta property="article:modified_time" content="2026-03-03T13:45:09.018Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Voice Dictation via Voxtype - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Voice Dictation via Voxtype
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 3 2026
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>I set up Voxtype on Debian to get local voice dictation that works reliably in terminal and GUI apps. This post is the exact setup I use.</p>
+<h2 id="Core-config"><a class="header-anchor" href="#Core-config">§</a>Core config</h2>
+<p>My main config lives at <code>~/.config/voxtype/config.toml</code>.
+I use <code>large-v3-turbo</code>: slower than smaller models on my hardware, but more accurate for technical terms.</p>
+<p>Core settings I modified:</p>
+<figure class="highlight toml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[hotkey]</span></span><br><span class="line"><span class="attr">key</span> = <span class="string">&quot;F13&quot;</span></span><br><span class="line"><span class="attr">modifiers</span> = []</span><br><span class="line"><span class="attr">mode</span> = <span class="string">&quot;toggle&quot;</span></span><br><span class="line"><span class="attr">enabled</span> = <span class="literal">true</span></span><br><span class="line"></span><br><span class="line"><span class="section">[whisper]</span></span><br><span class="line"><span class="attr">model</span> = <span class="string">&quot;large-v3-turbo&quot;</span></span><br><span class="line"><span class="attr">language</span> = <span class="string">&quot;en&quot;</span></span><br><span class="line"><span class="attr">translate</span> = <span class="literal">false</span></span><br><span class="line"></span><br><span class="line"><span class="section">[output]</span></span><br><span class="line"><span class="attr">mode</span> = <span class="string">&quot;paste&quot;</span></span><br><span class="line"><span class="comment"># due to keyd remapping; should have been ctrl+shift+v or ctrl+v</span></span><br><span class="line"><span class="attr">paste_keys</span> = <span class="string">&quot;super+rightshift+c&quot;</span></span><br><span class="line"><span class="attr">fallback_to_clipboard</span> = <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<h2 id="System-integration"><a class="header-anchor" href="#System-integration">§</a>System integration</h2>
+<p>I also have to install <code>ydotool</code> on Debian/KDE + Wayland so that text are pasted properly after recognition.</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo apt install ydotool</span><br></pre></td></tr></table></figure>
+<p>Enable startup on login:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl --user enable voxtype.service</span><br></pre></td></tr></table></figure>
+<p>I remapped <code>F6</code> to <code>F13</code> with <code>keyd</code>, then bound Voxtype to <code>F13</code> to avoid conflicts with common app shortcuts.</p>
+<p><code>/etc/keyd/default.conf</code>:</p>
+<figure class="highlight ini"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">[main]</span></span><br><span class="line"><span class="attr">f6</span> = f13</span><br></pre></td></tr></table></figure>
+<p>Apply mapping:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo systemctl restart keyd</span><br></pre></td></tr></table></figure>
+<p>I also raised inotify limits to avoid watcher errors on Debian:</p>
+<p><code>/etc/sysctl.conf</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">fs.inotify.max_user_watches=1048576</span><br><span class="line">fs.inotify.max_user_instances=1024</span><br></pre></td></tr></table></figure>
+<p>Load the new values:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo sysctl --system</span><br></pre></td></tr></table></figure>
+<p>Start Voxtype:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl --user start voxtype.service</span><br></pre></td></tr></table></figure>
+<p>Check status:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">systemctl --user status voxtype.service</span><br></pre></td></tr></table></figure>
+<p>That is the full setup. After this, dictation is stable and accurate enough for daily note-taking and command drafting.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>
