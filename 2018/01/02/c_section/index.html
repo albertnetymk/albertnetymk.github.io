@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Section Info for Variables in C"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2018/01/02/c_section/"/>
+
+
+<meta name="description" content="12345678&#x2F;&#x2F; int x[1000];&#x2F;&#x2F; int x[1000] &#x3D; &#123;1&#125;;int main()&#123;  &#x2F;&#x2F; int x[1000];  &#x2F;&#x2F; int x[1000] &#x3D; &#123;1&#125;;  return 0;&#125; Using size, one can obtain sizes for text, data, and bss secti">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Section Info for Variables in C">
+<meta property="og:url" content="https://albertnetymk.github.io/2018/01/02/c_section/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="12345678&#x2F;&#x2F; int x[1000];&#x2F;&#x2F; int x[1000] &#x3D; &#123;1&#125;;int main()&#123;  &#x2F;&#x2F; int x[1000];  &#x2F;&#x2F; int x[1000] &#x3D; &#123;1&#125;;  return 0;&#125; Using size, one can obtain sizes for text, data, and bss secti">
+<meta property="og:locale">
+<meta property="article:published_time" content="2018-01-02T06:08:35.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Section Info for Variables in C - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Section Info for Variables in C
+        
+      </h1>
+
+      <time class="post-time">
+          Jan 2 2018
+      </time>
+    </header>
+
+    <div class="post-content">
+    <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// int x[1000];</span></span><br><span class="line"><span class="comment">// int x[1000] = &#123;1&#125;;</span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">()</span></span><br><span class="line">&#123;</span><br><span class="line">  <span class="comment">// int x[1000];</span></span><br><span class="line">  <span class="comment">// int x[1000] = &#123;1&#125;;</span></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Using <code>size</code>, one can obtain sizes for <code>text</code>, <code>data</code>, and <code>bss</code> sections, respectively. By toggling the comments in the code snippet above, we can
+verify the following points:</p>
+<ul>
+<li>uninitialized global variables are placed in bss, which doesn’t contribute to the size <code>a.out</code></li>
+<li>initialized global variables are placed in data, and will result in increasing of the file size of <code>a.out</code></li>
+<li>local variables, initialized and uninitialized, are not saved in <code>a.out</code>; instead, they are allocated and initialized during runtime.</li>
+</ul>
+<p>A few more commands working with object and elf files: <code>nm</code>, <code>objdump</code>, and <code>readelf</code>.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

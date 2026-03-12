@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Alternate Screen in Terminal Emulator"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2013/11/25/alternate_screen/"/>
+
+
+<meta name="description" content="Terminal (short for Terminal Emulator) is the key interface between developers and Linux, and we spend most of our working there. Because of such close interaction, we (maybe only me) tend to forget t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Alternate Screen in Terminal Emulator">
+<meta property="og:url" content="https://albertnetymk.github.io/2013/11/25/alternate_screen/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Terminal (short for Terminal Emulator) is the key interface between developers and Linux, and we spend most of our working there. Because of such close interaction, we (maybe only me) tend to forget t">
+<meta property="og:locale">
+<meta property="article:published_time" content="2013-11-25T22:14:54.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Alternate Screen in Terminal Emulator - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Alternate Screen in Terminal Emulator
+        
+      </h1>
+
+      <time class="post-time">
+          Nov 25 2013
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Terminal (short for Terminal Emulator) is the key interface between developers and Linux, and we spend most of our working there. Because of such
+close interaction, we (maybe only me) tend to forget the complexity of it, believing it’s just one simple tool, does some simple jobs. Unfortunately,
+that’s far from the truth; most terminals are unbelievably complex, mainly because of history reasons. Even though I use it in my daily work, I have
+basically no idea what’s happening inside it. I will only cover one feature, alternate screen, of terminal in this post. When I learned more about
+terminal, I will wrote them as well.</p>
+<h2 id="What-THE-HELL-is-Alternate-Screen"><a class="header-anchor" href="#What-THE-HELL-is-Alternate-Screen">§</a>What THE HELL is Alternate Screen</h2>
+<p>Alternate Screen could be understood as one alternative workspace (buffer or universe), and everything happens there will not affect the main screen,
+(the one you see or in before entering Alternate Screen, and after exiting it). Considering one might looks through the history buffer of the
+terminal, it makes sense that the history is kept in one readable fashion. Some screen-oriented programs could easily messed it up, if there’s no
+Alternate Screen. (It’s one design choice, based on the assumption that people will read the history buffer sometime, and it’s one reasonable
+assumption, IMO.)</p>
+<h2 id="It’s-still-a-bit-abstract…"><a class="header-anchor" href="#It’s-still-a-bit-abstract…">§</a>It’s still a bit abstract…</h2>
+<p>I agree. Maybe this will make it clear if the process of entering and exiting Alternate Screen is illustrated. Terminal will enter and exit Alternate
+Screen only when it’s requested to, and the correspond command is <code>tput smcup</code> and <code>tput rmcup</code>, respectively. (I admit, it’s rather cryptic.) The
+programs need to use Alternate Screen will use these two commands to request for it, which happens behind the scene.</p>
+<h2 id="Come-on-you-didn’t-explain-it"><a class="header-anchor" href="#Come-on-you-didn’t-explain-it">§</a>Come on, you didn’t explain it</h2>
+<p>You just introduce some cryptic commands, that claims to do the work. I agree, again. <code>tput</code> is just one tool, that has sth to do terminfo, which provides some description for the terminal’s capability, for different
+terminals have different capability (you can’t imagine how fragmented the open source software world is). Therefore, terminfo acts as one abstract
+layer over all the different terminals. Inside terminfo, <code>smcup</code> and <code>rmcup</code> are just two entries describing the capability concerning Alternate
+Screen. (I could find what they stand for, so I persuade myself that <code>smcup</code> stands for <code>Save Memory CUrsor Positon</code>, and <code>rmcup</code> could be deducted
+easily then).</p>
+<h2 id="It-starts-to-make-sense-now-but-terminfo-is-still-quite-abstract"><a class="header-anchor" href="#It-starts-to-make-sense-now-but-terminfo-is-still-quite-abstract">§</a>It starts to make sense now, but terminfo is still quite abstract</h2>
+<p>Not if you can see the content of terminfo, using <code>infocmp</code>, which will show the terminfo for the terminal you are using.</p>
+<h2 id="Reference"><a class="header-anchor" href="#Reference">§</a>Reference</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://www.shallowsky.com/linux/noaltscreen.html">alternate scene</a></li>
+<li><a target="_blank" rel="noopener" href="http://raspberrypi.stackexchange.com/questions/8301/raspbian-save-and-restore-terminal-screen-content">terminfo</a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

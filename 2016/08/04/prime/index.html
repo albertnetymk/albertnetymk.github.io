@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Sieve of Eratosthenes in Haskell"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2016/08/04/prime/"/>
+
+
+<meta name="description" content="It’s the second famous Haskell example to illustrate its elegance and succinctness, only after quicksort. Non-surprisingly, it’s not implementing the original algorithm just like the quicksort case. W">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sieve of Eratosthenes in Haskell">
+<meta property="og:url" content="https://albertnetymk.github.io/2016/08/04/prime/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="It’s the second famous Haskell example to illustrate its elegance and succinctness, only after quicksort. Non-surprisingly, it’s not implementing the original algorithm just like the quicksort case. W">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-08-03T23:18:24.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.939Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Sieve of Eratosthenes in Haskell - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Sieve of Eratosthenes in Haskell
+        
+      </h1>
+
+      <time class="post-time">
+          Aug 4 2016
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>It’s the second famous Haskell example to illustrate its elegance and succinctness, only after quicksort. Non-surprisingly, it’s not
+implementing the original algorithm just like the quicksort case. Well, in Haskell’s defense, it’s actually implementing the non-refined version
+specified in <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes">https://en.wikipedia.org/wiki/Sieve_of_Eratosthenes</a>.</p>
+<p>This <a target="_blank" rel="noopener" href="http://www.cs.hmc.edu/~oneill/papers/Sieve-JFP.pdf">paper</a> gives a though analysis on this problem, and is fairly readable. The following code
+is basically a reprint of the code in that paper.</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> Data.Time</span><br><span class="line"></span><br><span class="line"><span class="title">primes</span> = <span class="number">2</span> : [x | x &lt;- [<span class="number">3</span>..], is_prime x]</span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">    is_prime x = all (\f -&gt; x `mod` f /= <span class="number">0</span>) $ factors x</span><br><span class="line">    factors x = takeWhile (\n -&gt; n*n &lt;= x) primes</span><br><span class="line"></span><br><span class="line"><span class="title">slow_seive</span> =  primes [<span class="number">2</span>..]</span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">    primes (x:xs) = x : (primes $ filter (\y -&gt; y `mod` x /= <span class="number">0</span>) xs)</span><br><span class="line">    primes _ = error <span class="string">&quot;finite int&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="title">fast_seive</span> = <span class="number">2</span> : [<span class="number">3</span>..] `minus` composites</span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">    composites = union [map (x*) [x..] | x &lt;- fast_seive]</span><br><span class="line"></span><br><span class="line"><span class="title">minus</span> (x:xs) (y:ys)</span><br><span class="line">  | x &lt; y = x : minus xs (y:ys)</span><br><span class="line">  | x == y = minus xs ys</span><br><span class="line">  | x &gt; y = minus (x:xs) ys</span><br><span class="line"><span class="title">minus</span> _ _ = error <span class="string">&quot;i&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="title">union</span> = foldr merge []</span><br><span class="line"></span><br><span class="line"><span class="title">merge</span> (x:xs) ys = x : merge&#x27; xs ys</span><br><span class="line">  <span class="keyword">where</span></span><br><span class="line">    merge&#x27; (x:xs) (y:ys)</span><br><span class="line">      | x &lt; y = x : merge&#x27; xs (y:ys)</span><br><span class="line">      | x == y = x : merge&#x27; xs ys</span><br><span class="line">      | x &gt; y = y : merge&#x27; (x:xs) ys</span><br><span class="line">    merge&#x27; _ _ = error <span class="string">&quot;i&quot;</span></span><br><span class="line"><span class="title">merge</span> _ _ = error <span class="string">&quot;i&quot;</span></span><br><span class="line"></span><br><span class="line"><span class="title">force</span> e = seq e $ return ()</span><br><span class="line"><span class="comment">-- force e = seq e $ print e</span></span><br><span class="line"><span class="title">index</span> = <span class="number">10</span>*<span class="number">1000</span></span><br><span class="line"></span><br><span class="line"><span class="title">main</span> = <span class="keyword">do</span></span><br><span class="line">  start &lt;- getCurrentTime</span><br><span class="line">  force $ primes !! index</span><br><span class="line">  stop &lt;- getCurrentTime</span><br><span class="line">  print $ diffUTCTime stop start</span><br><span class="line"></span><br><span class="line">  start &lt;- getCurrentTime</span><br><span class="line">  force $ slow_seive !! index</span><br><span class="line">  stop &lt;- getCurrentTime</span><br><span class="line">  print $ diffUTCTime stop start</span><br><span class="line"></span><br><span class="line">  start &lt;- getCurrentTime</span><br><span class="line">  force $ fast_seive !! index</span><br><span class="line">  stop &lt;- getCurrentTime</span><br><span class="line">  print $ diffUTCTime stop start</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">ghc -O prime.hs; ./prime</span></span><br><span class="line">0.040767s</span><br><span class="line">3.273944s</span><br><span class="line">0.045448s</span><br></pre></td></tr></table></figure>
+<p>The benchmark result is a bit different from the one in the paper, that it claims that <code>fast_seive</code> runs faster for practical size <code>n</code>, while trivial
+division on my machine is slightly faster. (Using ghc 7.10.3 on ubuntu 14.04.)</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

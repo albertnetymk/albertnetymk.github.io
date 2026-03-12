@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Parser Combinator"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2016/08/27/parser_combinator/"/>
+
+
+<meta name="description" content="It’s basically a reprint of https:&#x2F;&#x2F;remusao.github.io&#x2F;whats-in-a-parser-combinator.html. However, I am still not 100% clear on this concept, and I can’t say anything smart now, so this is a draft to b">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Parser Combinator">
+<meta property="og:url" content="https://albertnetymk.github.io/2016/08/27/parser_combinator/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="It’s basically a reprint of https:&#x2F;&#x2F;remusao.github.io&#x2F;whats-in-a-parser-combinator.html. However, I am still not 100% clear on this concept, and I can’t say anything smart now, so this is a draft to b">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-08-27T00:06:48.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Parser Combinator - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Parser Combinator
+        
+      </h1>
+
+      <time class="post-time">
+          Aug 27 2016
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>It’s basically a reprint of <a target="_blank" rel="noopener" href="https://remusao.github.io/whats-in-a-parser-combinator.html">https://remusao.github.io/whats-in-a-parser-combinator.html</a>. However, I am still not 100% clear on this concept, and I
+can’t say anything smart now, so this is a draft to be extended/improved.</p>
+<figure class="highlight haskell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">Parser</span> a = <span class="type">Parser</span> &#123;</span></span><br><span class="line"><span class="class">  <span class="title">run_parser</span> :: <span class="type">String</span> -&gt; <span class="type">Maybe</span> (<span class="title">a</span>, <span class="type">String</span>)</span></span><br><span class="line"><span class="class">&#125;</span></span><br><span class="line"></span><br><span class="line"><span class="title">failure</span> :: <span class="type">Parser</span> a</span><br><span class="line"><span class="title">failure</span> = <span class="type">Parser</span> $ \_ -&gt; <span class="type">Nothing</span></span><br><span class="line"></span><br><span class="line"><span class="title">return</span> :: a -&gt; <span class="type">Parser</span> a</span><br><span class="line"><span class="title">return</span> a = <span class="type">Parser</span> $ \s -&gt; <span class="type">Just</span> (a, s)</span><br><span class="line"></span><br><span class="line"><span class="title">one_char</span> :: <span class="type">Parser</span> <span class="type">Char</span></span><br><span class="line"><span class="title">one_char</span> = <span class="type">Parser</span> $ \s -&gt;</span><br><span class="line">  <span class="keyword">case</span> s <span class="keyword">of</span></span><br><span class="line">    (x:xs) -&gt; <span class="type">Just</span> (x, xs)</span><br><span class="line">    _ -&gt; <span class="type">Nothing</span></span><br><span class="line"></span><br><span class="line"><span class="title">char</span> :: <span class="type">Char</span> -&gt; <span class="type">Parser</span> <span class="type">Char</span></span><br><span class="line"><span class="title">char</span> a = <span class="keyword">do</span></span><br><span class="line">  x &lt;- one_char</span><br><span class="line">  <span class="keyword">if</span> x == a <span class="keyword">then</span></span><br><span class="line">    <span class="type">Prelude</span>.return x</span><br><span class="line">  <span class="keyword">else</span></span><br><span class="line">    failure</span><br><span class="line"></span><br><span class="line"><span class="title">string</span> :: <span class="type">String</span> -&gt; <span class="type">Parser</span> <span class="type">String</span></span><br><span class="line"><span class="title">string</span> [] = <span class="type">Main</span>.return []</span><br><span class="line"><span class="title">string</span> (x:xs) = (:) &lt;$&gt; char x &lt;*&gt; string xs</span><br><span class="line"><span class="comment">-- string (x:xs) = do</span></span><br><span class="line"><span class="comment">--   _ &lt;- char x</span></span><br><span class="line"><span class="comment">--   r &lt;- string xs</span></span><br><span class="line"><span class="comment">--   Prelude.return $ x:r</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Functor</span> <span class="type">Parser</span> <span class="keyword">where</span></span></span><br><span class="line">  fmap f p = <span class="type">Parser</span> $ \s -&gt;</span><br><span class="line">    fmap (\(x, y) -&gt; (f x, y)) $ run_parser p s</span><br><span class="line"></span><br><span class="line"><span class="title">parse_3</span> :: <span class="type">Parser</span> <span class="type">Int</span></span><br><span class="line"><span class="title">parse_3</span> = fmap read $ string <span class="string">&quot;3&quot;</span></span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Applicative</span> <span class="type">Parser</span> <span class="keyword">where</span></span></span><br><span class="line">  pure = <span class="type">Main</span>.return</span><br><span class="line">  p1 &lt;*&gt; p2  = <span class="type">Parser</span> $ \s -&gt; <span class="keyword">do</span></span><br><span class="line">    (f, r1) &lt;- run_parser p1 s</span><br><span class="line">    (x, r2) &lt;- run_parser p2 r1</span><br><span class="line">    <span class="type">Just</span> (f x, r2)</span><br><span class="line"></span><br><span class="line"><span class="title">parse_tuple</span> :: <span class="type">Parser</span> (<span class="type">Char</span>, <span class="type">Char</span>)</span><br><span class="line"><span class="title">parse_tuple</span> = (,) &lt;$&gt; one_char &lt;*&gt; one_char</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">data</span> <span class="type">AST</span> =</span></span><br><span class="line">  <span class="type">Foo</span> <span class="type">String</span></span><br><span class="line">  | <span class="type">Bar</span> <span class="type">String</span></span><br><span class="line">  | <span class="type">Pair</span> <span class="type">Char</span> <span class="type">Char</span></span><br><span class="line">  <span class="keyword">deriving</span> (<span class="type">Show</span>)</span><br><span class="line"></span><br><span class="line"><span class="title">parse_foo</span> :: <span class="type">Parser</span> <span class="type">AST</span></span><br><span class="line"><span class="title">parse_foo</span> = <span class="type">Foo</span> &lt;$&gt; string <span class="string">&quot;foo&quot;</span></span><br><span class="line"><span class="title">parse_bar</span> :: <span class="type">Parser</span> <span class="type">AST</span></span><br><span class="line"><span class="title">parse_bar</span> = <span class="type">Bar</span> &lt;$&gt; string <span class="string">&quot;bar&quot;</span></span><br><span class="line"><span class="title">parse_pair</span> :: <span class="type">Parser</span> <span class="type">AST</span></span><br><span class="line"><span class="title">parse_pair</span> = <span class="type">Pair</span> &lt;$&gt; one_char &lt;*&gt; one_char</span><br><span class="line"><span class="class"></span></span><br><span class="line"><span class="class"><span class="keyword">instance</span> <span class="type">Monad</span> <span class="type">Parser</span> <span class="keyword">where</span></span></span><br><span class="line">  p &gt;&gt;= f = <span class="type">Parser</span> $ \s -&gt;</span><br><span class="line">    <span class="keyword">case</span> run_parser p s <span class="keyword">of</span></span><br><span class="line">      <span class="type">Nothing</span> -&gt; <span class="type">Nothing</span></span><br><span class="line">      <span class="type">Just</span> (x, r) -&gt; run_parser (f x) r</span><br><span class="line"></span><br><span class="line"><span class="title">main</span> = <span class="keyword">do</span></span><br><span class="line">  print $ run_parser one_char <span class="string">&quot;hello world&quot;</span></span><br><span class="line">  print $ run_parser (string <span class="string">&quot;hello&quot;</span>) <span class="string">&quot;hello world&quot;</span></span><br><span class="line">  print $ run_parser (string <span class="string">&quot;hello&quot;</span>) <span class="string">&quot;foo world&quot;</span></span><br><span class="line">  print $ run_parser (string <span class="string">&quot;&quot;</span>) <span class="string">&quot;foo world&quot;</span></span><br><span class="line">  print $ run_parser parse_tuple <span class="string">&quot;hello&quot;</span></span><br><span class="line">  print $ run_parser parse_foo <span class="string">&quot;foo hello&quot;</span></span><br><span class="line">  print $ run_parser parse_bar <span class="string">&quot;barfoo hello&quot;</span></span><br><span class="line">  print $ run_parser parse_pair <span class="string">&quot;barfoo hello&quot;</span></span><br><span class="line">  print $ run_parser (char &#x27;b&#x27;) <span class="string">&quot;barfoo hello&quot;</span></span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

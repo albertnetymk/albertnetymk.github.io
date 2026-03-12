@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Brief Intro to the Template Interpreter in OpenJDK"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2021/08/03/template_interpreter/"/>
+
+
+<meta name="description" content="OpenJDK includes two interpreters, CPP interpreter and Template interpreter. The template interpreter is the default one, and its implementation contains various optimization to make it fast, which al">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Brief Intro to the Template Interpreter in OpenJDK">
+<meta property="og:url" content="https://albertnetymk.github.io/2021/08/03/template_interpreter/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="OpenJDK includes two interpreters, CPP interpreter and Template interpreter. The template interpreter is the default one, and its implementation contains various optimization to make it fast, which al">
+<meta property="og:locale">
+<meta property="article:published_time" content="2021-08-03T08:59:59.000Z">
+<meta property="article:modified_time" content="2023-04-15T23:57:51.791Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Brief Intro to the Template Interpreter in OpenJDK - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Brief Intro to the Template Interpreter in OpenJDK
+        
+      </h1>
+
+      <time class="post-time">
+          Aug 3 2021
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>OpenJDK includes two interpreters, CPP interpreter and Template interpreter. The template interpreter is the default
+one, and its implementation contains various optimization to make it fast, which also makes its source code harder to
+follow to some extent. In this post we will focus on the template interpreter, understanding how it works on a
+high-level, and gradually diving deeper into the source code.</p>
+<h2 id="Primer"><a class="header-anchor" href="#Primer">§</a>Primer</h2>
+<p>We will start with a sketch of the interpreter, covering some major components while omitting most details from the
+actually implementation. The key in this section is to get a rough mental picture on what the interpreter consists of,
+and how it’s different from traditional switch-based interpreters.</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// bytecodes are defined as an enum.</span></span><br><span class="line"><span class="keyword">enum</span> <span class="title class_">bytecodes</span> &#123;</span><br><span class="line">  bytecode0,</span><br><span class="line">  bytecode1,</span><br><span class="line">  bytecode2,</span><br><span class="line">  ...</span><br><span class="line">  num_bytecodes</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// entry to the assembly snippet of each bytecode; IOW, each slot contains</span></span><br><span class="line"><span class="comment">// the starting address of the assembly snippet.</span></span><br><span class="line"><span class="type">uintptr_t</span> bc_table[num_bytecodes];</span><br><span class="line"></span><br><span class="line"><span class="comment">// bytecode pointer, pointing to the current bytecode; similar to the program counter (pc)</span></span><br><span class="line"><span class="type">void</span>* bcp;</span><br><span class="line"></span><br><span class="line"><span class="comment">// populate the bc_table</span></span><br><span class="line"><span class="comment">//   generate_asm is architecture specific, and emits assembly snippet implementing a bytecode.</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">populate_bc_table</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (bc : bytecodes) &#123;</span><br><span class="line">    bc_table[bc] = <span class="built_in">generate_asm</span>(bc);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>In addition to generating the assembly snippet for a bytecode, <code>generate_asm</code> also emits the logic for updating the
+<code>bcp</code> and jump to the entry of the next bytecode. In summary, after <code>populate_bc_table</code>, the generated assembly looks
+like:</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">bytecode0:</span>                /&lt;- diff dispatch point</span><br><span class="line">  ...                    |</span><br><span class="line">  ...                    |</span><br><span class="line">  bcp += size            |</span><br><span class="line">  <span class="keyword">jmp</span> bc_table[*bcp] &lt;---|</span><br><span class="line"><span class="symbol">bytecode1:</span>               |</span><br><span class="line">  ...                    |</span><br><span class="line">  ...                    |</span><br><span class="line">  bcp += size            |</span><br><span class="line">  <span class="keyword">jmp</span> bc_table[*bcp] &lt;---|</span><br></pre></td></tr></table></figure>
+<p>Note that at the end of each bytecode case, <code>bcp</code> is incremented and we jump to the assembly block associated with the
+new bytecode. One advantage of this structure, instead of a plain C-switch, is that there are multiple dispatch points,
+making branch-prediction easier, if opcode X is often followed by opcode Y. (The X-Y association sounds very reasonable
+and convincing, but I am unaware of any hard evidence in the area of JVM bytecode.) This technique is called “direct
+threaded code” in the literature.</p>
+<p>Here I am making an omission, and treating all all bytecodes as “branchless” (they run-till-the-end). However, some
+bytecode contains “jump” logic, such as <code>goto</code>, <code>ireturn</code>, etc. IOW, after executing them, the control <em>does not</em> move
+to the next one in the bytecode stream. The following pseudo-assembly shows the difference between “branchless” and
+“branchful” bytecode: the former has a generic dispatch logic, while the latter handles the dispatching itself.</p>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="symbol">bytecode0:</span>                &lt;--- branchless bytecode</span><br><span class="line">  ...                       &lt;-\</span><br><span class="line">  ...                         | -- assembly corresponding to this bytecode</span><br><span class="line">  ...                       &lt;-/</span><br><span class="line">  bcp += size</span><br><span class="line">  <span class="keyword">jmp</span> bc_table[*bcp]</span><br><span class="line"><span class="symbol">goto:</span>                     &lt;--- branchful bytecode</span><br><span class="line">  branch_offset = ...      &lt;-\</span><br><span class="line">  bcp += branch_offset       |  -- assembly corresponding to this bytecode</span><br><span class="line">  <span class="keyword">jmp</span> bc_table[*bcp]       &lt;-/</span><br><span class="line">  // unreachable</span><br></pre></td></tr></table></figure>
+<h2 id="A-tale-of-two-stacks"><a class="header-anchor" href="#A-tale-of-two-stacks">§</a>A tale of two stacks</h2>
+<p>In the context of JVM bytecode interpreter, there are two conceptually independent “stacks”: the call stack and the JVM
+stack (because JVM is stack-based as opposed to register-based). The call stack grows/shrinks as we call <em>into</em> and
+return <em>from</em> a function in C/C++, while the JVM stack grows/shrinks as JVM bytecode is executed, e.g. <code>iadd</code> pops two
+integers from the stack (shrinking), and pushes the sum of them onto the stack (growing).</p>
+<p>The call stack is automatically managed by the C/C++ compiler&amp;runtime, requiring nothing from us. In contrast, the JVM
+stack must be managed by the interpreter (us). The most straightforward way to implement JVM stack is to preallocate
+some memory, and a counter tracking the top of the stack: for each bytecode, we get the inputs from the stack (pop from
+the stack), do the calculation, and place the result on the stack (push to the stack). The pseudo-code for <code>iadd</code> could
+be something like:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// JVM stack</span></span><br><span class="line"><span class="type">uint64_t</span> stack[stack_size_limit];</span><br><span class="line">uint top = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="built_in">push</span>(e) &#123;</span><br><span class="line">  stack[top++] = e</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">pop</span>() &#123;</span><br><span class="line">  <span class="keyword">return</span> stack[--top]</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="built_in">iadd</span>() &#123;</span><br><span class="line">  x = <span class="built_in">pop</span>()</span><br><span class="line">  y = <span class="built_in">pop</span>()</span><br><span class="line">  <span class="built_in">push</span>(x + y)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Because the call stack is “natively” supported by the architecture: there is a dedicated CPU register (the stack
+register) and instructions for manipulate the stack (<code>push</code> and <code>pop</code>), it requires fewer instructions than stacks
+implemented on the C/C++ level. Therefore, as an optimization, the interpreter in OpenJDK uses the call stack to
+implement the JVM stack, which of course requires the use of assembly since the call stack is not visible on the C/C++
+level. In the following, I will continue using the term JVM stack, but it’s just a conceptual entity, and the actual
+implementation is the call stack.</p>
+<h2 id="Top-of-stack-TOS-state"><a class="header-anchor" href="#Top-of-stack-TOS-state">§</a>Top-of-stack (TOS) state</h2>
+<p>Even though the call stack is fast, it’s still slower than the CPU registers, so it’s desirable to keep the data in
+registers (in other words, to delay pushing the data onto the call stack). For example, when a bytecode should push
+something onto the JVM stack, and the bytecode immediately uses it (popping it from the JVM stack), the two stack
+operations should cancel out ideally. Take the following Java bytecode as an example (generated from <code>int x = 1;</code>):</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">iconst_1 # places int value 1 onto the stack;</span><br><span class="line">istore_0 # store int value (at top-of-stack) into variable 0;</span><br></pre></td></tr></table></figure>
+<p>If we implement the interpreter naively, the resulting assembly will be something like:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">reg = 1</span><br><span class="line">push reg # pushing to the JVM stack</span><br><span class="line">...      # jump to next bytecode</span><br><span class="line">pop reg  # poping from the JVM stack</span><br></pre></td></tr></table></figure>
+<p>In order to cancel out these two stack operations (push and pop), the interpreter must be stateful, because operations to the JVM stack corresponding to the current bytecode are influenced by the next bytecode.</p>
+<p>The technique used in OpenJDK is to track the current top-of-stack (TOS) state: what is on the top of the JVM stack
+semantically. There are ten TOS states, and we will use only two in our examples: <code>vtos</code> (void) and <code>itos</code> (integer).
+Each TOS state denotes a value with the corresponding type in the TOS register (a preserved CPU register). If the
+next bytecode requires an input with the matching TOS state, such input can be retrieved directly from the register
+instead of loading from the JVM stack. Using the same <code>int x = 1;</code> from above, but with the TOS state transition:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">iconst_1 # places int value 1 onto the stack;                 vtos -&gt; itos</span><br><span class="line">istore_0 # store int value (at top-of-stack) into variable 0; itos -&gt; vtos</span><br></pre></td></tr></table></figure>
+<p>The corresponding assembly will semantically be something like:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">reg_tos = 1        # store 1 to TOS register</span><br><span class="line">...                # jumping to next bytecode</span><br><span class="line">var_0 = reg_tos    # load from TOS register</span><br></pre></td></tr></table></figure>
+<p>Note that we get rid of JVM-stack operations completely here; both load and store are done to registers. This is
+possible only if the output TOS state matches the input TOS state of the next bytecode. What happens if there’s a
+mismatch? Let’s look at another example, excerpt from <code>f(1, 2)</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">iconst_1 # places int value 1 onto the stack;   vtos -&gt; itos</span><br><span class="line">iconst_2 # places int value 2 onto the stack;   vtos -&gt; itos</span><br></pre></td></tr></table></figure>
+<p>The assembly will semantically be like:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">reg_tos = 1</span><br><span class="line">...                # jumping to next bytecode</span><br><span class="line">push(reg_tos)      # TOS state: actual (itos) diffs with the expected (vtos); saving TOS register onto the JVM stack</span><br><span class="line">reg_tos = 2</span><br></pre></td></tr></table></figure>
+<p>Basically, we save the TOS entry onto the JVM stack when mismatch occurs. In a way, this TOS register can be viewed as a
+single-value cache in front of the JVM stack.</p>
+<h2 id="To-see-the-world-as-it-is"><a class="header-anchor" href="#To-see-the-world-as-it-is">§</a>To see the world as it is</h2>
+<p>In this section we will use a trivial Java program to see the actual generated assembly (both the application and the
+interpreter).</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">test</span> &#123;</span><br><span class="line">  <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line">    <span class="type">int</span> <span class="variable">x</span> <span class="operator">=</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">javac test.java</span></span><br><span class="line"><span class="meta prompt_">$ </span><span class="language-bash">javap -c <span class="built_in">test</span></span></span><br></pre></td></tr></table></figure>
+<p>The Java bytecode looks like:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">0: iconst_1</span><br><span class="line">1: istore_1</span><br><span class="line">2: return</span><br></pre></td></tr></table></figure>
+<p>Next we ask JVM to print the interpreter (the assembly for each bytecode).</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ java -XX:+UnlockDiagnosticVMOptions \</span><br><span class="line">       -XX:+PrintInterpreter          \ # print assembly for each bytecode</span><br><span class="line">       -XX:PrintAssemblyOptions=intel \ # use the same dst-src order as in openjdk source code</span><br><span class="line">       test</span><br></pre></td></tr></table></figure>
+<p>The part for <code>iconst_1</code> looks like the following. It contains mostly three sections:</p>
+<ol>
+<li>entries, depending on the TOS state</li>
+<li>the main body, “essence”</li>
+<li>incrementing the bytecode pointer and jump to the next bytecode</li>
+</ol>
+<figure class="highlight x86asm"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">iconst_1  <span class="number">4</span> iconst_1  [<span class="number">0x00007f22097effe0</span>, <span class="number">0x00007f22097f0040</span>]  <span class="number">96</span> bytes</span><br><span class="line"></span><br><span class="line">--------------------------------------------------------------------------------</span><br><span class="line">  <span class="number">0x00007f22097effe0</span>:   <span class="keyword">sub</span>    <span class="built_in">rsp</span>,<span class="number">0x8</span>               &lt;----|</span><br><span class="line">  <span class="number">0x00007f22097effe4</span>:   <span class="keyword">vmovss</span> <span class="built_in">DWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rsp</span>],<span class="built_in">xmm0</span>       |</span><br><span class="line">  <span class="number">0x00007f22097effe9</span>:   <span class="keyword">jmp</span>    <span class="number">0x00007f22097f0013</span>         | diff entries depending</span><br><span class="line">  <span class="number">0x00007f22097effee</span>:   <span class="keyword">sub</span>    <span class="built_in">rsp</span>,<span class="number">0x10</span>              &lt;----|   on the TOS state</span><br><span class="line">  <span class="number">0x00007f22097efff2</span>:   <span class="keyword">vmovsd</span> <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rsp</span>],<span class="built_in">xmm0</span>       |</span><br><span class="line">  <span class="number">0x00007f22097efff7</span>:   <span class="keyword">jmp</span>    <span class="number">0x00007f22097f0013</span>         |  all go to the essence</span><br><span class="line">  <span class="number">0x00007f22097efffc</span>:   <span class="keyword">sub</span>    <span class="built_in">rsp</span>,<span class="number">0x10</span>              &lt;----|</span><br><span class="line">  <span class="number">0x00007f22097f0000</span>:   <span class="keyword">mov</span>    <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rsp</span>],<span class="built_in">rax</span>        |</span><br><span class="line">  <span class="number">0x00007f22097f0004</span>:   <span class="keyword">mov</span>    <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">rsp</span>+<span class="number">0x8</span>],<span class="number">0x0</span>    |</span><br><span class="line">  <span class="number">0x00007f22097f000d</span>:   <span class="keyword">jmp</span>    <span class="number">0x00007f22097f0013</span>         |</span><br><span class="line">  <span class="number">0x00007f22097f0012</span>:   <span class="keyword">push</span>   <span class="built_in">rax</span>                   &lt;----|</span><br><span class="line">  <span class="number">0x00007f22097f0013</span>:   <span class="keyword">mov</span>    <span class="built_in">eax</span>,<span class="number">0x1</span>  &lt;---------------------------------- the <span class="string">&quot;essence&quot;</span></span><br><span class="line">  <span class="number">0x00007f22097f0018</span>:   <span class="keyword">movzx</span>  <span class="built_in">ebx</span>,<span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">r13</span>+<span class="number">0x1</span>]&lt;----|</span><br><span class="line">  <span class="number">0x00007f22097f001d</span>:   <span class="keyword">inc</span>    <span class="built_in">r13</span>                        |</span><br><span class="line">  <span class="number">0x00007f22097f0020</span>:   movabs <span class="built_in">r10</span>,<span class="number">0x7f22292851c0</span>         | <span class="keyword">inc</span> bcp <span class="keyword">and</span> jump to next bytecode</span><br><span class="line">  <span class="number">0x00007f22097f002a</span>:   <span class="keyword">jmp</span>    <span class="built_in">QWORD</span> <span class="built_in">PTR</span> [<span class="built_in">r10</span>+<span class="built_in">rbx</span>*<span class="number">8</span>] &lt;----|</span><br><span class="line">  <span class="number">0x00007f22097f002e</span>:   <span class="keyword">xchg</span>   <span class="built_in">ax</span>,<span class="built_in">ax</span></span><br><span class="line">  <span class="number">0x00007f22097f0030</span>:   <span class="keyword">add</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">rax</span>],<span class="built_in">al</span></span><br><span class="line">  <span class="number">0x00007f22097f0032</span>:   <span class="keyword">add</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">rax</span>],<span class="built_in">al</span></span><br><span class="line">  <span class="number">0x00007f22097f0034</span>:   <span class="keyword">add</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">rax</span>],<span class="built_in">al</span></span><br><span class="line">  <span class="number">0x00007f22097f0036</span>:   <span class="keyword">add</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">rax</span>],<span class="built_in">al</span></span><br><span class="line">  <span class="number">0x00007f22097f0038</span>:   <span class="keyword">add</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">rax</span>],<span class="built_in">al</span></span><br><span class="line">  <span class="number">0x00007f22097f003a</span>:   <span class="keyword">add</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">rax</span>],<span class="built_in">al</span></span><br><span class="line">  <span class="number">0x00007f22097f003c</span>:   <span class="keyword">add</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">rax</span>],<span class="built_in">al</span></span><br><span class="line">  <span class="number">0x00007f22097f003e</span>:   <span class="keyword">add</span>    <span class="built_in">BYTE</span> <span class="built_in">PTR</span> [<span class="built_in">rax</span>],<span class="built_in">al</span></span><br><span class="line">--------------------------------------------------------------------------------</span><br></pre></td></tr></table></figure>
+<p>Here we can appreciate why it’s called a “template” interpreter: depending on the TOS state, control enters this
+assembly snippet at different entries, as if there are different versions of assembly for the same bytecode.</p>
+<p>Next we will look at some key stack frames, which might be useful when using a debugger.</p>
+<p><code>JavaMain</code> calls the <code>main</code> method in Java. Since <code>JavaMain</code> is C but <code>main</code> is Java, a stub is used in the middle to
+bridge the call: <code>JavaCalls::call_helper</code> identifies the being called Java method (<code>main</code> in this case), calls into the
+interpreter using <code>StubRoutines::call_stub</code>. The control moves to the interpreter through one of many entries, depending
+on the method kind, <code>AbstractInterpreter::MethodKind</code>. The method kind of <code>main</code> is <code>zerolocals</code>, and the entry for such
+method kind is generated by <code>TemplateInterpreterGenerator::generate_normal_entry</code>. At the end of the entry, we will
+dispatch to the first bytecode in the current Java method.</p>
+<p>In summary,</p>
+<table>
+<thead>
+<tr>
+<th>class::method</th>
+<th>callsite</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JavaMain</code></td>
+<td><code>(*env)-&gt;CallStaticVoidMethod(...)</code></td>
+</tr>
+<tr>
+<td><code>JavaCalls::call_helper</code></td>
+<td><code>StubRoutines::call_stub</code></td>
+</tr>
+<tr>
+<td><code>TemplateInterpreterGenerator::generate_normal_entry</code></td>
+<td><code>__ dispatch_next(vtos)</code></td>
+</tr>
+</tbody>
+</table>
+<p>Here is a concrete example on how to debug a Java program using GDB:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">gdb java -ex &quot;set args -cp . &lt;class&gt;&quot;                           \</span><br><span class="line">         -ex &quot;set breakpoint pending on&quot;                        \</span><br><span class="line">         -ex &quot;break jni_CallStaticVoidMethod&quot;                   \</span><br><span class="line">         -ex &quot;run&quot;                                              \</span><br><span class="line">         -ex &quot;break InterpreterRuntime::resolve_from_cache&quot;     \</span><br><span class="line">         -ex &quot;cont&quot;                                             \</span><br><span class="line">         -ex &#x27;call pns($rsp, $rbp, $pc)&#x27;</span><br></pre></td></tr></table></figure>
+<p>The first breakpoint gets us the transition from C to Java, and the second breakpoint corresponds roughly to the first
+thing in Java land.</p>
+<h2 id="References"><a class="header-anchor" href="#References">§</a>References</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://jilp.org/vol5/v5paper12.pdf">The Structure and Performance of Efficient Interpreters</a></li>
+<li><a target="_blank" rel="noopener" href="https://metebalci.com/blog/demystifying-the-jvm-jvm-variants-cppinterpreter-and-templateinterpreter/">https://metebalci.com/blog/demystifying-the-jvm-jvm-variants-cppinterpreter-and-templateinterpreter/</a></li>
+<li><a target="_blank" rel="noopener" href="http://progdoc.de/papers/Joker2014/joker2014.html#(1)">http://progdoc.de/papers/Joker2014/joker2014.html#(1)</a></li>
+<li><a target="_blank" rel="noopener" href="https://openjdk.java.net/groups/hotspot/docs/RuntimeOverview.html">https://openjdk.java.net/groups/hotspot/docs/RuntimeOverview.html</a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

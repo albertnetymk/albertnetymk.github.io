@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Data Size in Assembly and C"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2016/12/14/data_size/"/>
+
+
+<meta name="description" content="Since I can never remember the width for each suffix, I am just reprinting them here from https:&#x2F;&#x2F;en.wikibooks.org&#x2F;wiki&#x2F;X86_Assembly&#x2F;GAS_Syntax  GAS assembly instructions are generally suffixed with t">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Data Size in Assembly and C">
+<meta property="og:url" content="https://albertnetymk.github.io/2016/12/14/data_size/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Since I can never remember the width for each suffix, I am just reprinting them here from https:&#x2F;&#x2F;en.wikibooks.org&#x2F;wiki&#x2F;X86_Assembly&#x2F;GAS_Syntax  GAS assembly instructions are generally suffixed with t">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-12-14T13:26:33.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.939Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> Data Size in Assembly and C - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Data Size in Assembly and C
+        
+      </h1>
+
+      <time class="post-time">
+          Dec 14 2016
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Since I can never remember the width for each suffix, I am just reprinting them here from <a target="_blank" rel="noopener" href="https://en.wikibooks.org/wiki/X86_Assembly/GAS_Syntax">https://en.wikibooks.org/wiki/X86_Assembly/GAS_Syntax</a></p>
+<blockquote>
+<p>GAS assembly instructions are generally suffixed with the letters “b”, “s”, “w”, “l”, “q” or “t” to determine what size operand is being
+manipulated.</p>
+<pre><code>b = byte (8 bit)
+s = short (16 bit integer) or single (32-bit floating point)
+w = word (16 bit)
+l = long (32 bit integer or 64-bit floating point)
+q = quad (64 bit)
+t = ten bytes (80-bit floating point)
+</code></pre>
+<p>If the suffix is not specified, and there are no memory operands for the instruction, GAS infers the operand size from the size of the destination
+register operand (the final operand).</p>
+</blockquote>
+<p>Being one level higher than assembly, C has different data size (on x86-64):</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> *argv[])</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;char    is %zu\n&quot;</span>, <span class="keyword">sizeof</span>(<span class="type">char</span>));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;short   is %zu\n&quot;</span>, <span class="keyword">sizeof</span>(<span class="type">short</span>));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;int     is %zu\n&quot;</span>, <span class="keyword">sizeof</span>(<span class="type">int</span>));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;long    is %zu\n&quot;</span>, <span class="keyword">sizeof</span>(<span class="type">long</span>));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;size_t  is %zu\n&quot;</span>, <span class="keyword">sizeof</span>(<span class="type">size_t</span>));</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">char    is 1</span><br><span class="line">short   is 2</span><br><span class="line">int     is 4</span><br><span class="line">long    is 8</span><br><span class="line">size_t  is 8</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

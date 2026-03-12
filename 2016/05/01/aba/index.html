@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="ABA Problem"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2016/05/01/aba/"/>
+
+
+<meta name="description" content="This post documents my understanding on ABA problem in lockfree programming. The wikipedia entry presents a concrete example on how ABA could occur in naive usage of CAS for lockfree programming. The">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ABA Problem">
+<meta property="og:url" content="https://albertnetymk.github.io/2016/05/01/aba/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="This post documents my understanding on ABA problem in lockfree programming. The wikipedia entry presents a concrete example on how ABA could occur in naive usage of CAS for lockfree programming. The">
+<meta property="og:locale">
+<meta property="article:published_time" content="2016-05-01T15:12:49.000Z">
+<meta property="article:modified_time" content="2019-11-02T16:14:10.943Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> ABA Problem - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 7.3.0"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          ABA Problem
+        
+      </h1>
+
+      <time class="post-time">
+          May 1 2016
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>This post documents my understanding on ABA problem in lockfree programming.</p>
+<p>The <a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/ABA_problem">wikipedia entry</a> presents a concrete example on how ABA could occur in naive usage of CAS for lockfree
+programming. The step-by-step reproduce of erroneous situation is easy to follow even for those who have no prior C++ knowledge.</p>
+<p>The intended logic for pop is to swing <code>top</code> from <code>A</code> to <code>B</code>:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">top → A → B → C</span><br><span class="line">    ↘</span><br><span class="line">      B → C</span><br></pre></td></tr></table></figure>
+<p>However, right before the swing happens, the state of the stack is subject to change, which <code>pop</code> fails to capture, resulting into that <code>B</code> is pointed
+by the new <code>top</code>.</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">top → A → C</span><br><span class="line">    ↘</span><br><span class="line">      B → C</span><br></pre></td></tr></table></figure>
+<p>The illegal access to collected memory could be avoided if a GC is used instead of manual memory management, but the implementation is still
+problematic, for the CAS would put <code>B</code> in the stack again, even though it has been popped by thread 2.</p>
+<p>It’s a common misconception that all ABA problems go away after using GC, and the example in the wiki page is a counter example.</p>
+<p>On the other hand, it’s always possible to write lockfree code without ABA problem with GC, using one level of redirection. See more at
+<a target="_blank" rel="noopener" href="https://www.research.ibm.com/people/m/michael/RC23089.pdf">https://www.research.ibm.com/people/m/michael/RC23089.pdf</a></p>
+<p>The following is a lockfree stack implementation in C assuming a proper GC. It is ABA immune because for each element inserted into the stack, we
+create a wrapping node around it, and assumed GC wouldn’t reuse a node unless it’s unreachable.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">define</span> _atomic_cas(ptr, expected, desired) \</span></span><br><span class="line"><span class="meta">    __atomic_compare_exchange_n(ptr, expected, desired, \</span></span><br><span class="line"><span class="meta">            false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> _atomic_load(ptr) \</span></span><br><span class="line"><span class="meta">    __atomic_load_n(ptr, __ATOMIC_SEQ_CST);</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">node</span> &#123;</span><br><span class="line">    <span class="type">void</span> *data;</span><br><span class="line">    <span class="keyword">struct</span> <span class="title class_">node</span> *next;</span><br><span class="line">&#125; node;</span><br><span class="line"></span><br><span class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> <span class="title class_">stack</span> &#123;</span><br><span class="line">    node *top;</span><br><span class="line">&#125; stack;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span>* <span class="title">stack_pop</span><span class="params">(stack *s, <span class="type">void</span> *d)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="type">void</span> *data;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        node *t = _atomic_load(&amp;s-&gt;top);</span><br><span class="line">        <span class="keyword">if</span> (!t) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        node *next = t-&gt;next;</span><br><span class="line">        <span class="keyword">if</span> (_atomic_cas(&amp;s-&gt;top, &amp;t, next)) &#123;</span><br><span class="line">            data = t-&gt;data;</span><br><span class="line">            <span class="comment">// assuming GC takes care of t</span></span><br><span class="line">            <span class="keyword">return</span> data;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">stack_push</span><span class="params">(stack *s, <span class="type">void</span> *d)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    node *<span class="keyword">new</span> = <span class="built_in">malloc</span>(<span class="keyword">sizeof</span> *<span class="keyword">new</span>);</span><br><span class="line">    <span class="keyword">new</span>-&gt;data = d;</span><br><span class="line">    <span class="keyword">do</span> &#123;</span><br><span class="line">        node *t = _atomic_load(&amp;s-&gt;top);</span><br><span class="line">        <span class="keyword">new</span>-&gt;next = t;</span><br><span class="line">        <span class="keyword">if</span> (_atomic_cas(&amp;s-&gt;top, &amp;t, <span class="keyword">new</span>)) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">while</span> (<span class="literal">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>From the same author, <a target="_blank" rel="noopener" href="http://dl.acm.org/citation.cfm?id=987595">http://dl.acm.org/citation.cfm?id=987595</a> presents a alternative way to GC, so that ABA problems eliminated by GC would not
+appear using Hazard pointers as well.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>
