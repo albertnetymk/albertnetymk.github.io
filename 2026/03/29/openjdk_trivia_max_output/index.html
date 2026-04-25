@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="OpenJDK Trivia: Increasing Max Output"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2026/03/29/openjdk_trivia_max_output/"/>
+
+
+<meta name="description" content="OpenJDK tests keep the per-test output limit relatively small by default. This is usually a good tradeoff: successful tests do not need huge logs, and smaller limits reduce disk and I&#x2F;O overhead. But">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenJDK Trivia: Increasing Max Output">
+<meta property="og:url" content="https://albertnetymk.github.io/2026/03/29/openjdk_trivia_max_output/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="OpenJDK tests keep the per-test output limit relatively small by default. This is usually a good tradeoff: successful tests do not need huge logs, and smaller limits reduce disk and I&#x2F;O overhead. But">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-03-29T11:05:21.000Z">
+<meta property="article:modified_time" content="2026-03-29T11:26:23.547Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+  <script type="text/javascript">
+    (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+    })(window, document, "clarity", "script", "mi8jxzrmvj");
+  </script>
+
+
+
+
+
+    <title> OpenJDK Trivia: Increasing Max Output - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 8.1.1"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/presentations">
+                            
+                            
+                                Presentations
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/courses">
+                            
+                            
+                                Courses
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          OpenJDK Trivia: Increasing Max Output
+        
+      </h1>
+
+      <time class="post-time">
+          Mar 29 2026
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>OpenJDK tests keep the per-test output limit relatively small by default. This is usually a good tradeoff: successful tests do not need huge logs, and smaller limits reduce disk and I/O overhead.</p>
+<p>But when a test crashes, that limit can hide the most useful part of the output. In those cases, temporarily raising the cap helps preserve more context.</p>
+<h2 id="1-Do-it-on-the-command-line"><a class="header-anchor" href="#1-Do-it-on-the-command-line">§</a>1. Do it on the command line</h2>
+<p>For a one-off run, pass a larger limit via <code>JTREG</code>:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">make test TEST=hotspot/gtest/GTestWrapper.java JTREG=MAX_OUTPUT=10000000</span><br></pre></td></tr></table></figure>
+<p>This is the simplest option when debugging a single failing test.</p>
+<h2 id="2-Change-it-in-TEST-ROOT"><a class="header-anchor" href="#2-Change-it-in-TEST-ROOT">§</a>2. Change it in <code>TEST.ROOT</code></h2>
+<p>If you want the larger limit to come from the test configuration, add or update this entry in <code>TEST.ROOT</code>:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">maxOutputSize=12000000</span><br></pre></td></tr></table></figure>
+<p>For example, if you are working in the HotSpot test tree, edit:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">test/hotspot/jtreg/TEST.ROOT</span><br></pre></td></tr></table></figure>
+<p>This is useful when you expect to rerun the same crashing test several times.</p>
+<h2 id="3-Pass-it-through-jib-sh"><a class="header-anchor" href="#3-Pass-it-through-jib-sh">§</a>3. Pass it through <code>jib.sh</code></h2>
+<p>If you normally run tests through <code>jib.sh</code>, forward the same setting like this:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">bash make/jib.sh --test hotspot/gtest/GTestWrapper.java --test-make-args JTREG=MAX_OUTPUT=10000000</span><br></pre></td></tr></table></figure>
+<p>This is the same idea as the direct <code>make test</code> invocation, just routed through <code>jib.sh</code>.</p>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>
