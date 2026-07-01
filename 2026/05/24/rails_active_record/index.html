@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Rails: Active Record Joins And N+1"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2026/05/24/rails_active_record/"/>
+
+
+<meta name="description" content="This post uses a small Rails app with three models: 1234567891011121314class User &lt; ApplicationRecord  has_many :posts  has_many :commentsendclass Post &lt; ApplicationRecord  belongs_to :user  has">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rails: Active Record Joins And N+1">
+<meta property="og:url" content="https://albertnetymk.github.io/2026/05/24/rails_active_record/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="This post uses a small Rails app with three models: 1234567891011121314class User &lt; ApplicationRecord  has_many :posts  has_many :commentsendclass Post &lt; ApplicationRecord  belongs_to :user  has">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-05-24T09:30:17.000Z">
+<meta property="article:modified_time" content="2026-05-24T09:44:01.630Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+
+
+
+    <title> Rails: Active Record Joins And N+1 - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 8.1.1"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Rails: Active Record Joins And N+1
+        
+      </h1>
+
+      <time class="post-time">
+          May 24 2026
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>This post uses a small Rails app with three models:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">class</span> <span class="title class_">User</span> &lt; <span class="title class_ inherited__">ApplicationRecord</span></span><br><span class="line">  has_many <span class="symbol">:posts</span></span><br><span class="line">  has_many <span class="symbol">:comments</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Post</span> &lt; <span class="title class_ inherited__">ApplicationRecord</span></span><br><span class="line">  belongs_to <span class="symbol">:user</span></span><br><span class="line">  has_many <span class="symbol">:comments</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">class</span> <span class="title class_">Comment</span> &lt; <span class="title class_ inherited__">ApplicationRecord</span></span><br><span class="line">  belongs_to <span class="symbol">:user</span></span><br><span class="line">  belongs_to <span class="symbol">:post</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p>A user can write many posts and comments. Each post belongs to one user and can have many comments.</p>
+<p>The examples answer questions like:</p>
+<ul>
+<li>Which users have written posts about Active Record?</li>
+<li>Which users have zero posts?</li>
+<li>How can posts be sorted by comment count?</li>
+</ul>
+<p>These questions involve multiple tables, so they require <strong>cross-table queries</strong>. If all the needed columns live in a single table, no join is needed. A join is used when filtering, sorting, or grouping by data in another table.</p>
+<h2 id="1-Inner-Join-joins"><a class="header-anchor" href="#1-Inner-Join-joins">§</a>1. Inner Join: <code>joins</code></h2>
+<p>Find users who have written posts about a particular topic:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">User</span></span><br><span class="line">  .joins(<span class="symbol">:posts</span>)</span><br><span class="line">  .where(<span class="string">&quot;posts.title LIKE ?&quot;</span>, <span class="string">&quot;%Active%&quot;</span>)</span><br><span class="line">  .distinct</span><br><span class="line">  .order(<span class="string">&quot;users.name ASC&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>SQL shape:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="keyword">DISTINCT</span> users.<span class="operator">*</span> <span class="keyword">FROM</span> users</span><br><span class="line"><span class="keyword">INNER</span> <span class="keyword">JOIN</span> posts <span class="keyword">ON</span> posts.user_id <span class="operator">=</span> users.id</span><br><span class="line"><span class="keyword">WHERE</span> posts.title <span class="keyword">LIKE</span> <span class="string">&#x27;%Active%&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> users.name <span class="keyword">ASC</span>;</span><br></pre></td></tr></table></figure>
+<p><code>joins</code> brings in another table for filtering, sorting, or grouping, which allows the query to reference it in <code>where</code>.</p>
+<p><code>distinct</code> is needed here because one user can match multiple joined rows. If Alice has three matching posts, plain <code>joins</code> returns Alice three times. <code>distinct</code> collapses those duplicate user rows.</p>
+<h2 id="2-Left-Join-left-joins"><a class="header-anchor" href="#2-Left-Join-left-joins">§</a>2. Left Join: <code>left_joins</code></h2>
+<p>Unlike an inner join, a left join keeps all left-side records even when no matching association exists.</p>
+<p>Example: users sorted by post count, zero-post users included:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">User</span></span><br><span class="line">  .left_joins(<span class="symbol">:posts</span>)</span><br><span class="line">  .select(<span class="string">&quot;users.*, COUNT(posts.id) AS posts_count&quot;</span>)</span><br><span class="line">  .group(<span class="string">&quot;users.id&quot;</span>)</span><br><span class="line">  .order(<span class="string">&quot;posts_count DESC&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>Such queries live in the controller; the results are passed to the view for presentation. With the first example, a naive view might list each user’s post titles:</p>
+<figure class="highlight erb"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="language-xml">&lt;%</span><span class="language-ruby"> <span class="variable">@users</span>.each <span class="keyword">do</span> |<span class="params">user</span>| </span><span class="language-xml">%&gt;</span></span><br><span class="line"><span class="language-xml">  <span class="tag">&lt;<span class="name">h2</span>&gt;</span>&lt;%=</span><span class="language-ruby"> user.name </span><span class="language-xml">%&gt;<span class="tag">&lt;/<span class="name">h2</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">  &lt;%</span><span class="language-ruby"> user.posts.each <span class="keyword">do</span> |<span class="params">post</span>| </span><span class="language-xml">%&gt;</span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">p</span>&gt;</span>&lt;%=</span><span class="language-ruby"> post.title </span><span class="language-xml">%&gt;<span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">  &lt;%</span><span class="language-ruby"> <span class="keyword">end</span> </span><span class="language-xml">%&gt;</span></span><br><span class="line"><span class="language-xml">&lt;%</span><span class="language-ruby"> <span class="keyword">end</span> </span><span class="language-xml">%&gt;</span></span><br></pre></td></tr></table></figure>
+<p>This innocent-looking view causes the N+1 problem. The server log shows:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> users;                            <span class="comment">-- 1 query</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> posts <span class="keyword">WHERE</span> user_id <span class="operator">=</span> <span class="number">1</span>;          <span class="comment">-- N queries</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> posts <span class="keyword">WHERE</span> user_id <span class="operator">=</span> <span class="number">2</span>;</span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> posts <span class="keyword">WHERE</span> user_id <span class="operator">=</span> <span class="number">3</span>;</span><br></pre></td></tr></table></figure>
+<p>Rails provides three APIs to solve this.</p>
+<h2 id="3-eager-load-One-Joined-Query-Filtering-Included"><a class="header-anchor" href="#3-eager-load-One-Joined-Query-Filtering-Included">§</a>3. <code>eager_load</code> - One Joined Query, Filtering Included</h2>
+<p>The first example used a join for filtering but still caused N+1 on <code>user.posts</code> in the view. <code>eager_load</code> replaces the join and preloads the association from the same query:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># Controller - replaces the earlier joins query</span></span><br><span class="line"><span class="variable">@users</span> = <span class="title class_">User</span></span><br><span class="line">  .eager_load(<span class="symbol">:posts</span>)</span><br><span class="line">  .where(<span class="string">&quot;posts.title LIKE ?&quot;</span>, <span class="string">&quot;%Active%&quot;</span>)</span><br><span class="line">  .order(<span class="string">&quot;users.name ASC&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>SQL shape:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> users.<span class="operator">*</span>, posts.<span class="operator">*</span> <span class="keyword">FROM</span> users</span><br><span class="line"><span class="keyword">LEFT</span> <span class="keyword">OUTER</span> <span class="keyword">JOIN</span> posts <span class="keyword">ON</span> posts.user_id <span class="operator">=</span> users.id</span><br><span class="line"><span class="keyword">WHERE</span> posts.title <span class="keyword">LIKE</span> <span class="string">&#x27;%Active%&#x27;</span></span><br><span class="line"><span class="keyword">ORDER</span> <span class="keyword">BY</span> users.name <span class="keyword">ASC</span>;</span><br></pre></td></tr></table></figure>
+<p>Now the view iterates <code>user.posts</code> with zero additional queries. The association was loaded from the joined rows.</p>
+<p>Because the WHERE clause filters the joined rows, <code>user.posts</code> contains <strong>only</strong> the matching posts. The LEFT JOIN + WHERE effectively acts as an inner filter on the loaded association.</p>
+<p>No <code>distinct</code> is shown here. The SQL still returns one row per matching post, but <code>eager_load</code> uses those rows to build unique parent objects and attach the loaded posts. With the same data, <code>joins</code> may return <code>[Alice, Alice, Alice, Carol]</code>; <code>eager_load</code> returns <code>[Alice, Carol]</code>, with Alice’s matching posts already attached.</p>
+<h2 id="4-preload-Separate-Queries-Simpler-Case"><a class="header-anchor" href="#4-preload-Separate-Queries-Simpler-Case">§</a>4. <code>preload</code> - Separate Queries, Simpler Case</h2>
+<p>When the query does not filter by the association at all, <code>preload</code> is the cleanest choice:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">@users</span> = <span class="title class_">User</span></span><br><span class="line">  .preload(<span class="symbol">:posts</span>)</span><br><span class="line">  .order(<span class="symbol">:name</span>)</span><br></pre></td></tr></table></figure>
+<p>SQL shape:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> users <span class="keyword">ORDER</span> <span class="keyword">BY</span> name;              <span class="comment">-- 1 query</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">FROM</span> posts <span class="keyword">WHERE</span> user_id <span class="keyword">IN</span> (...);     <span class="comment">-- 1 query</span></span><br></pre></td></tr></table></figure>
+<p>The view renders <code>user.posts</code> without N+1. No joined-table filtering needed; just load the association.</p>
+<h2 id="5-Checking-Whether-An-Association-Is-Loaded"><a class="header-anchor" href="#5-Checking-Whether-An-Association-Is-Loaded">§</a>5. Checking Whether An Association Is Loaded</h2>
+<p>Rails can report whether an association has already been loaded:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">user.posts.loaded?</span><br></pre></td></tr></table></figure>
+<p>The lower-level equivalent is:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">user.association(<span class="symbol">:posts</span>).loaded?</span><br></pre></td></tr></table></figure>
+<p>This is a direct way to check whether the view is protected from the N+1 problem. If <code>user.posts.loaded?</code> is <code>false</code> before the view loops over <code>user.posts</code>, that loop can issue one extra query per user.</p>
+<p>It is also useful when comparing <code>joins</code>, <code>eager_load</code>, and <code>preload</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Query</th>
+<th><code>user.posts.loaded?</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>User.joins(:posts)</code></td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td><code>User.eager_load(:posts)</code></td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>User.preload(:posts)</code></td>
+<td><code>true</code></td>
+</tr>
+</tbody>
+</table>
+<p><code>joins</code> can reference the <code>posts</code> table in SQL, but it does not load the <code>posts</code> association, so it does not prevent N+1 by itself. <code>eager_load</code> and <code>preload</code> do load the association, so the view can render <code>user.posts</code> without extra queries.</p>
+<h2 id="6-Tradeoff-eager-load-vs-preload"><a class="header-anchor" href="#6-Tradeoff-eager-load-vs-preload">§</a>6. Tradeoff: <code>eager_load</code> vs <code>preload</code></h2>
+<p>There is no universal winner. <code>eager_load</code> may duplicate parent columns across joined rows. <code>preload</code> may load unnecessary associated rows. Which cost is worse depends on the concrete data.</p>
+<p><code>eager_load</code> filters in SQL and loads matching joined rows:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">User</span></span><br><span class="line">  .eager_load(<span class="symbol">:posts</span>)</span><br><span class="line">  .where(<span class="string">&quot;posts.title LIKE ?&quot;</span>, <span class="string">&quot;%Active%&quot;</span>)</span><br><span class="line">  .order(<span class="string">&quot;users.name ASC&quot;</span>)</span><br></pre></td></tr></table></figure>
+<p>This can avoid loading unrelated posts, but repeated user columns appear once per matching post in the SQL result.</p>
+<p>Example SQL result shape:</p>
+<table>
+<thead>
+<tr>
+<th>SQL row</th>
+<th>User columns</th>
+<th>Post columns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Alice data</td>
+<td>Active post A</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Alice data</td>
+<td>Active post B</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Alice data</td>
+<td>Active post C</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Carol data</td>
+<td>Active post D</td>
+</tr>
+</tbody>
+</table>
+<p>Waste: Alice’s user columns are repeated three times.</p>
+<p><code>preload</code> can load complete associations, then Ruby can filter in memory:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">User</span></span><br><span class="line">  .preload(<span class="symbol">:posts</span>)</span><br><span class="line">  .select <span class="keyword">do</span> |<span class="params">user</span>|</span><br><span class="line">    user.posts.any? &#123; |<span class="params">post</span>| post.title.<span class="keyword">include</span>?(<span class="string">&quot;Active&quot;</span>) &#125;</span><br><span class="line">  <span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p>This avoids repeated joined user columns, but it may load many users and posts that Ruby later discards.</p>
+<p>Example loaded data:</p>
+<table>
+<thead>
+<tr>
+<th>Loaded record</th>
+<th>Kept after Ruby filter?</th>
+<th>Reason</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Alice</td>
+<td>Yes</td>
+<td>Has an Active post</td>
+</tr>
+<tr>
+<td>Alice’s 6 posts</td>
+<td>Partly useful</td>
+<td>Only 3 posts match Active</td>
+</tr>
+<tr>
+<td>Bob</td>
+<td>No</td>
+<td>No Active posts</td>
+</tr>
+<tr>
+<td>Bob’s 3 posts</td>
+<td>No</td>
+<td>Loaded but discarded</td>
+</tr>
+<tr>
+<td>Dave</td>
+<td>No</td>
+<td>No Active posts</td>
+</tr>
+<tr>
+<td>Dave’s 1 post</td>
+<td>No</td>
+<td>Loaded but discarded</td>
+</tr>
+</tbody>
+</table>
+<p>Waste: extra users and posts are loaded even though Ruby later filters them out.</p>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Waste shape</th>
+<th>Best for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>eager_load + where</code></td>
+<td>Duplicated parent columns in joined rows</td>
+<td>SQL-friendly filters, matching posts only</td>
+</tr>
+<tr>
+<td><code>preload + Ruby filtering</code></td>
+<td>Unnecessary parent and child rows loaded into Ruby</td>
+<td>Small data, Ruby-only filtering logic</td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-includes-Convenience-Wrapper"><a class="header-anchor" href="#7-includes-Convenience-Wrapper">§</a>7. <code>includes</code> - Convenience Wrapper</h2>
+<p><code>includes</code> is a convenience helper that lets Rails choose either <code>preload</code> or <code>eager_load</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Condition</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No reference to the joined table</td>
+<td><code>preload</code></td>
+</tr>
+<tr>
+<td>Hash condition on association</td>
+<td><code>eager_load</code></td>
+</tr>
+<tr>
+<td>Raw SQL referencing association + <code>references</code></td>
+<td><code>eager_load</code></td>
+</tr>
+</tbody>
+</table>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="title class_">User</span></span><br><span class="line">  .includes(<span class="symbol">:posts</span>)</span><br><span class="line">  .where(<span class="symbol">posts:</span> &#123; <span class="symbol">title:</span> <span class="string">&quot;Active Record Basics&quot;</span> &#125;)</span><br></pre></td></tr></table></figure>
+<p>Using <code>preload</code> or <code>eager_load</code> directly conveys intent more clearly and avoids surprises. <code>includes</code> can be skipped once the two are understood.</p>
+<p>Summary:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Query strategy</th>
+<th>Joined table in WHERE/ORDER?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>eager_load</code></td>
+<td>Single LEFT JOIN</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>preload</code></td>
+<td>Separate queries</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>includes</code></td>
+<td>Rails decides</td>
+<td>Only when needed</td>
+</tr>
+</tbody>
+</table>
+<h2 id="8-Advanced-Example-Posts-Ordered-By-Comment-Count"><a class="header-anchor" href="#8-Advanced-Example-Posts-Ordered-By-Comment-Count">§</a>8. Advanced Example: Posts Ordered By Comment Count</h2>
+<p>Question:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">For each user, list their posts ordered by number of comments.</span><br></pre></td></tr></table></figure>
+<p>This requires both SQL aggregation and Ruby-side grouping.</p>
+<p>Controller:</p>
+<figure class="highlight ruby"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="variable">@users</span> = <span class="title class_">User</span></span><br><span class="line">  .order(<span class="string">&quot;users.name ASC&quot;</span>)</span><br><span class="line"></span><br><span class="line"><span class="variable">@posts_by_user_id</span> = <span class="title class_">Post</span></span><br><span class="line">  .left_joins(<span class="symbol">:comments</span>)</span><br><span class="line">  .select(<span class="string">&quot;posts.*, COUNT(comments.id) AS comments_count&quot;</span>)</span><br><span class="line">  .group(<span class="string">&quot;posts.id&quot;</span>)</span><br><span class="line">  .order(<span class="string">&quot;posts.user_id ASC, comments_count DESC&quot;</span>)</span><br><span class="line">  .group_by(&amp;<span class="symbol">:user_id</span>)</span><br></pre></td></tr></table></figure>
+<p>View:</p>
+<figure class="highlight erb"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="language-xml">&lt;%</span><span class="language-ruby"> <span class="variable">@users</span>.each <span class="keyword">do</span> |<span class="params">user</span>| </span><span class="language-xml">%&gt;</span></span><br><span class="line"><span class="language-xml">  <span class="tag">&lt;<span class="name">h2</span>&gt;</span>&lt;%=</span><span class="language-ruby"> user.name </span><span class="language-xml">%&gt;<span class="tag">&lt;/<span class="name">h2</span>&gt;</span></span></span><br><span class="line"><span class="language-xml"></span></span><br><span class="line"><span class="language-xml">  &lt;%</span><span class="language-ruby"> (<span class="variable">@posts_by_user_id</span>[user.id] |<span class="params"></span>| []).each <span class="keyword">do</span> |<span class="params">post</span>| </span><span class="language-xml">%&gt;</span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">      &lt;%=</span><span class="language-ruby"> post.title </span><span class="language-xml">%&gt;</span></span><br><span class="line"><span class="language-xml">      (&lt;%=</span><span class="language-ruby"> post.comments_count </span><span class="language-xml">%&gt; comments)</span></span><br><span class="line"><span class="language-xml">    <span class="tag">&lt;/<span class="name">p</span>&gt;</span></span></span><br><span class="line"><span class="language-xml">  &lt;%</span><span class="language-ruby"> <span class="keyword">end</span> </span><span class="language-xml">%&gt;</span></span><br><span class="line"><span class="language-xml">&lt;%</span><span class="language-ruby"> <span class="keyword">end</span> </span><span class="language-xml">%&gt;</span></span><br></pre></td></tr></table></figure>
+<p>Key details:</p>
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>left_joins(:comments)</code></td>
+<td>Keeps posts with zero comments</td>
+</tr>
+<tr>
+<td><code>COUNT(comments.id)</code></td>
+<td>Counts real comments, not the NULL row from the left join</td>
+</tr>
+<tr>
+<td><code>group(&quot;posts.id&quot;)</code></td>
+<td>Groups joined comment rows back into one row per post</td>
+</tr>
+<tr>
+<td><code>order(&quot;posts.user_id ASC, comments_count DESC&quot;)</code></td>
+<td>Keeps posts grouped by user, then sorts each user’s posts by comment count</td>
+</tr>
+<tr>
+<td><code>group_by(&amp;:user_id)</code></td>
+<td>Ruby grouping after the SQL query, producing <code>{ user_id =&gt; [posts] }</code></td>
+</tr>
+</tbody>
+</table>
+<p>This is different from eager loading. The goal is not to render every comment; the goal is to calculate a count. Aggregation belongs in SQL.</p>
+<h2 id="9-Quick-Reference"><a class="header-anchor" href="#9-Quick-Reference">§</a>9. Quick Reference</h2>
+<table>
+<thead>
+<tr>
+<th>Need</th>
+<th>Reach for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Filter/sort/group by another table</td>
+<td><code>joins</code></td>
+</tr>
+<tr>
+<td>Keep records with no matches</td>
+<td><code>left_joins</code></td>
+</tr>
+<tr>
+<td>Filter by association, load it too</td>
+<td><code>eager_load</code></td>
+</tr>
+<tr>
+<td>Load association, no table refs</td>
+<td><code>preload</code></td>
+</tr>
+<tr>
+<td>Convenience (hides choice)</td>
+<td><code>includes</code></td>
+</tr>
+</tbody>
+</table>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>
