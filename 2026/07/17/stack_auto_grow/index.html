@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Linux Stack Auto-Growth and the Guard Gap"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2026/07/17/stack_auto_grow/"/>
+
+
+<meta name="description" content="The Linux main-thread stack can grow toward lower virtual addresses when a program touches memory below its current VMA. This experiment maps pages around that boundary to see when growth succeeds. Th">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux Stack Auto-Growth and the Guard Gap">
+<meta property="og:url" content="https://albertnetymk.github.io/2026/07/17/stack_auto_grow/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="The Linux main-thread stack can grow toward lower virtual addresses when a program touches memory below its current VMA. This experiment maps pages around that boundary to see when growth succeeds. Th">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-07-17T10:06:06.000Z">
+<meta property="article:modified_time" content="2026-07-16T10:28:39.724Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+
+
+
+    <title> Linux Stack Auto-Growth and the Guard Gap - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 8.1.1"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Linux Stack Auto-Growth and the Guard Gap
+        
+      </h1>
+
+      <time class="post-time">
+          Jul 17 2026
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>The Linux main-thread stack can grow toward lower virtual addresses when a
+program touches memory below its current VMA. This experiment maps pages around
+that boundary to see when growth succeeds.</p>
+<p>The test attempts to grow the stack by writing one byte below its current VMA:</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">volatile</span> <span class="type">char</span>* below_stack =</span><br><span class="line">    <span class="built_in">reinterpret_cast</span>&lt;<span class="keyword">volatile</span> <span class="type">char</span>*&gt;(stack.start) - <span class="number">1</span>;</span><br><span class="line">*below_stack = <span class="number">1</span>;</span><br></pre></td></tr></table></figure>
+<p>When that address is unmapped, the resulting page fault can make Linux extend a
+downward-growing stack VMA by one page.</p>
+<p>Linux also enforces <code>stack_guard_gap</code>, which defaults to 256 pages. This gap is
+not a reserved or pre-mapped region. Linux applies it while choosing mmap
+addresses and while expanding a stack. The kernel boot option
+<code>stack_guard_gap=</code> can change its size.</p>
+<p>The experiment uses <code>MAP_FIXED_NOREPLACE</code> so each mapping is attempted at an
+exact address without replacing an existing VMA. Each case runs in its own
+child process because two cases intentionally cause <code>SIGSEGV</code>. A child created
+by <code>fork()</code> inherits the same virtual address layout, while its stack growth and
+new mappings remain private to that child.</p>
+<h2 id="Six-cases"><a class="header-anchor" href="#Six-cases">§</a>Six cases</h2>
+<table>
+<thead>
+<tr>
+<th>Case</th>
+<th>New mapping</th>
+<th>Location</th>
+<th>Result of growth attempt</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Read/write</td>
+<td>Immediately above <code>stack.end</code></td>
+<td>Grows</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Read/write</td>
+<td>At <code>stack.start</code></td>
+<td><code>mmap</code> fails with <code>EEXIST</code>; stack grows</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Read/write</td>
+<td>Inside the guard gap</td>
+<td><code>SIGSEGV</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td><code>PROT_NONE</code></td>
+<td>Inside the guard gap</td>
+<td>Grows</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>PROT_NONE</code></td>
+<td>Immediately below <code>stack.start</code></td>
+<td><code>SIGSEGV</code></td>
+</tr>
+<tr>
+<td>6</td>
+<td>Read/write</td>
+<td>Below the guard gap</td>
+<td>Grows</td>
+</tr>
+</tbody>
+</table>
+<p>The cases run independently. The diagram places their mapping targets on one
+address-space axis. <code>P</code> is one page, and <code>G</code> is the guard-gap size.</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">                         higher addresses</span><br><span class="line"></span><br><span class="line">stack.end             ---------------------  case 1: RW starts here                  -&gt; grows</span><br><span class="line">                       existing stack VMA</span><br><span class="line">stack.start           ---------------------  case 2: RW starts here                  -&gt; EEXIST, grows</span><br><span class="line">stack.start - 1        * faulting byte</span><br><span class="line">                                             case 5: NONE starts at stack.start - P  -&gt; SIGSEGV</span><br><span class="line">                       unmapped space</span><br><span class="line">stack.start - G/2     ---------------------  case 3: RW page                         -&gt; SIGSEGV</span><br><span class="line">                                             case 4: NONE page                       -&gt; grows</span><br><span class="line">                       unmapped space</span><br><span class="line">stack.start - G       ---------------------  lower edge of guard gap</span><br><span class="line">                       unmapped page</span><br><span class="line">stack.start - G - 2P  ---------------------  case 6: RW page                         -&gt; grows</span><br><span class="line"></span><br><span class="line">                          lower addresses</span><br></pre></td></tr></table></figure>
+<p>Cases 3 and 4 differ only in memory protection. Linux checks whether the VMA
+below an expanding stack is accessible before enforcing the guard-gap
+distance. The relevant part of <code>expand_downwards()</code> is:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!(prev-&gt;vm_flags &amp; VM_GROWSDOWN) &amp;&amp;</span><br><span class="line">    vma_is_accessible(prev) &amp;&amp;</span><br><span class="line">    (address - prev-&gt;vm_end &lt; stack_guard_gap))</span><br><span class="line">        <span class="keyword">return</span> -ENOMEM;</span><br></pre></td></tr></table></figure>
+<p>A read/write VMA is accessible, so case 3 fails the expansion check. A
+<code>PROT_NONE</code> VMA is not accessible, so case 4 bypasses that check. Unmapped
+space and the <code>PROT_NONE</code> range both provide inaccessible guard space at that
+distance.</p>
+<p>Case 5 reaches a different path. The faulting address is already covered by
+the <code>PROT_NONE</code> VMA immediately below the stack. Linux handles it as a
+protection fault in that VMA rather than as a request to extend the stack, so
+the child receives <code>SIGSEGV</code>.</p>
+<h2 id="The-program"><a class="header-anchor" href="#The-program">§</a>The program</h2>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">ifndef</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">define</span> _GNU_SOURCE</span></span><br><span class="line"><span class="meta">#<span class="keyword">endif</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdint.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/wait.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">stack_info</span> &#123;</span><br><span class="line">  <span class="type">uintptr_t</span> start;</span><br><span class="line">  <span class="type">uintptr_t</span> end;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="type">size_t</span> <span class="title">size</span><span class="params">()</span> <span class="type">const</span> <span class="keyword">noexcept</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> end - start;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">constexpr</span> <span class="type">size_t</span> default_stack_guard_pages = <span class="number">256</span>;</span><br><span class="line"></span><br><span class="line"><span class="type">size_t</span> page_size = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="function">stack_info <span class="title">get_stack</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">volatile</span> <span class="type">char</span> marker;</span><br><span class="line">  <span class="type">uintptr_t</span> stack_address = <span class="built_in">reinterpret_cast</span>&lt;<span class="type">uintptr_t</span>&gt;(&amp;marker);</span><br><span class="line"></span><br><span class="line">  FILE* maps = <span class="built_in">fopen</span>(<span class="string">&quot;/proc/self/maps&quot;</span>, <span class="string">&quot;r&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (maps == <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;fopen&quot;</span>);</span><br><span class="line">    <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="type">unsigned</span> <span class="type">long</span> start, end;</span><br><span class="line">  <span class="type">char</span> line[<span class="number">256</span>];</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (<span class="built_in">fgets</span>(line, <span class="built_in">sizeof</span>(line), maps) != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">sscanf</span>(line, <span class="string">&quot;%lx-%lx&quot;</span>, &amp;start, &amp;end) == <span class="number">2</span> &amp;&amp;</span><br><span class="line">        start &lt;= stack_address &amp;&amp; stack_address &lt; end) &#123;</span><br><span class="line">      <span class="built_in">fclose</span>(maps);</span><br><span class="line">      <span class="keyword">return</span> &#123;start, end&#125;;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (<span class="built_in">ferror</span>(maps)) &#123;</span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;fgets&quot;</span>);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">fputs</span>(<span class="string">&quot;stack mapping not found\n&quot;</span>, stderr);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="built_in">fclose</span>(maps);</span><br><span class="line">  <span class="built_in">exit</span>(EXIT_FAILURE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">print_stack</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  stack_info stack = <span class="built_in">get_stack</span>();</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;stack: [%p, %p], size: %zu KiB\n&quot;</span>,</span><br><span class="line">         <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(stack.start),</span><br><span class="line">         <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(stack.end), stack.<span class="built_in">size</span>() / <span class="number">1024</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">run_mapping_test</span><span class="params">(<span class="type">int</span> number, stack_info stack, <span class="type">uintptr_t</span> target,</span></span></span><br><span class="line"><span class="params"><span class="function">                      <span class="type">int</span> protection)</span> </span>&#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">char</span>* protection_name = protection == PROT_NONE ? <span class="string">&quot;NONE&quot;</span> : <span class="string">&quot;RW&quot;</span>;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;case %d: mmap at %p (%s): &quot;</span>, number,</span><br><span class="line">         <span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(target), protection_name);</span><br><span class="line">  <span class="type">void</span>* mapping =</span><br><span class="line">      <span class="built_in">mmap</span>(<span class="built_in">reinterpret_cast</span>&lt;<span class="type">void</span>*&gt;(target), page_size, protection,</span><br><span class="line">           MAP_PRIVATE | MAP_ANONYMOUS | MAP_FIXED_NOREPLACE, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">if</span> (mapping == MAP_FAILED) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;failed (%s)\n&quot;</span>, <span class="built_in">strerror</span>(errno));</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;succeeded\n&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;case %d: growing stack by one page...\n&quot;</span>, number);</span><br><span class="line">  <span class="keyword">volatile</span> <span class="type">char</span>* below_stack =</span><br><span class="line">      <span class="built_in">reinterpret_cast</span>&lt;<span class="keyword">volatile</span> <span class="type">char</span>*&gt;(stack.start) - <span class="number">1</span>;</span><br><span class="line">  *below_stack = <span class="number">1</span>;</span><br><span class="line">  <span class="built_in">print_stack</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (mapping != MAP_FAILED) &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">munmap</span>(mapping, page_size) == <span class="number">-1</span>) &#123;</span><br><span class="line">      <span class="built_in">perror</span>(<span class="string">&quot;munmap&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Map immediately above the stack; downward stack growth remains safe.</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">case_1</span><span class="params">(<span class="type">size_t</span>)</span> </span>&#123;</span><br><span class="line">  stack_info stack = <span class="built_in">get_stack</span>();</span><br><span class="line">  <span class="built_in">run_mapping_test</span>(<span class="number">1</span>, stack, stack.end, PROT_READ | PROT_WRITE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Map over the existing stack; MAP_FIXED_NOREPLACE rejects the overlap.</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">case_2</span><span class="params">(<span class="type">size_t</span>)</span> </span>&#123;</span><br><span class="line">  stack_info stack = <span class="built_in">get_stack</span>();</span><br><span class="line">  <span class="built_in">run_mapping_test</span>(<span class="number">2</span>, stack, stack.start, PROT_READ | PROT_WRITE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Map inside the guard gap; mmap succeeds, but the stack cannot grow.</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">case_3</span><span class="params">(<span class="type">size_t</span> guard_gap)</span> </span>&#123;</span><br><span class="line">  stack_info stack = <span class="built_in">get_stack</span>();</span><br><span class="line">  <span class="built_in">run_mapping_test</span>(<span class="number">3</span>, stack, stack.start - guard_gap / <span class="number">2</span>,</span><br><span class="line">                   PROT_READ | PROT_WRITE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Map PROT_NONE inside the guard gap; Linux still allows the stack to grow.</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">case_4</span><span class="params">(<span class="type">size_t</span> guard_gap)</span> </span>&#123;</span><br><span class="line">  stack_info stack = <span class="built_in">get_stack</span>();</span><br><span class="line">  <span class="built_in">run_mapping_test</span>(<span class="number">4</span>, stack, stack.start - guard_gap / <span class="number">2</span>, PROT_NONE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Map PROT_NONE immediately below the stack; the faulting address is</span></span><br><span class="line"><span class="comment">// inaccessible.</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">case_5</span><span class="params">(<span class="type">size_t</span>)</span> </span>&#123;</span><br><span class="line">  stack_info stack = <span class="built_in">get_stack</span>();</span><br><span class="line">  <span class="built_in">run_mapping_test</span>(<span class="number">5</span>, stack, stack.start - page_size, PROT_NONE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// Map below the guard gap; the stack can still grow by one page.</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">case_6</span><span class="params">(<span class="type">size_t</span> guard_gap)</span> </span>&#123;</span><br><span class="line">  stack_info stack = <span class="built_in">get_stack</span>();</span><br><span class="line">  <span class="built_in">run_mapping_test</span>(<span class="number">6</span>, stack, stack.start - guard_gap - <span class="number">2</span> * page_size,</span><br><span class="line">                   PROT_READ | PROT_WRITE);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="built_in">setvbuf</span>(stdout, <span class="literal">nullptr</span>, _IONBF, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  <span class="type">long</span> detected_page_size = <span class="built_in">sysconf</span>(_SC_PAGESIZE);</span><br><span class="line">  <span class="keyword">if</span> (detected_page_size &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">perror</span>(<span class="string">&quot;sysconf&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  page_size = <span class="built_in">static_cast</span>&lt;<span class="type">size_t</span>&gt;(detected_page_size);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// This experiment assumes Linux&#x27;s default 256-page stack guard gap. The</span></span><br><span class="line">  <span class="comment">// kernel&#x27;s stack_guard_gap boot option can override it.</span></span><br><span class="line">  <span class="type">const</span> <span class="type">size_t</span> guard_gap = default_stack_guard_pages * page_size;</span><br><span class="line">  <span class="keyword">using</span> case_function = <span class="built_in">void</span> (*)(<span class="type">size_t</span>);</span><br><span class="line">  <span class="keyword">constexpr</span> case_function cases[] = &#123;case_1, case_2, case_3,</span><br><span class="line">                                     case_4, case_5, case_6&#125;;</span><br><span class="line">  <span class="keyword">constexpr</span> <span class="type">size_t</span> case_count = <span class="built_in">sizeof</span>(cases) / <span class="built_in">sizeof</span>(cases[<span class="number">0</span>]);</span><br><span class="line"></span><br><span class="line">  <span class="built_in">print_stack</span>();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Run each case in its own OS process.</span></span><br><span class="line">  <span class="keyword">for</span> (<span class="type">size_t</span> index = <span class="number">0</span>; index &lt; case_count; ++index) &#123;</span><br><span class="line">    <span class="type">int</span> number = <span class="built_in">static_cast</span>&lt;<span class="type">int</span>&gt;(index + <span class="number">1</span>);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;\n=== Case %d ===\n&quot;</span>, number);</span><br><span class="line"></span><br><span class="line">    <span class="type">pid_t</span> child = fork();</span><br><span class="line">    <span class="keyword">if</span> (child == <span class="number">-1</span>) &#123;</span><br><span class="line">      <span class="built_in">perror</span>(<span class="string">&quot;fork&quot;</span>);</span><br><span class="line">      <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (child == <span class="number">0</span>) &#123;</span><br><span class="line">      cases[index](guard_gap);</span><br><span class="line">      _exit(<span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">int</span> status;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">waitpid</span>(child, &amp;status, <span class="number">0</span>) == <span class="number">-1</span>) &#123;</span><br><span class="line">      <span class="built_in">perror</span>(<span class="string">&quot;waitpid&quot;</span>);</span><br><span class="line">      <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">WIFSIGNALED</span>(status)) &#123;</span><br><span class="line">      <span class="built_in">printf</span>(<span class="string">&quot;case %d: terminated by %s\n&quot;</span>, number,</span><br><span class="line">             <span class="built_in">strsignal</span>(<span class="built_in">WTERMSIG</span>(status)));</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!<span class="built_in">WIFEXITED</span>(status) || <span class="built_in">WEXITSTATUS</span>(status) != <span class="number">0</span>) &#123;</span><br><span class="line">      <span class="built_in">fprintf</span>(stderr, <span class="string">&quot;case %d: child failed\n&quot;</span>, number);</span><br><span class="line">      <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Observed-output"><a class="header-anchor" href="#Observed-output">§</a>Observed output</h2>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">stack: [0x7fffc163a000, 0x7fffc165c000], size: 136 KiB</span><br><span class="line"></span><br><span class="line">=== Case 1 ===</span><br><span class="line">case 1: mmap at 0x7fffc165c000 (RW): succeeded</span><br><span class="line">case 1: growing stack by one page...</span><br><span class="line">stack: [0x7fffc1639000, 0x7fffc165c000], size: 140 KiB</span><br><span class="line"></span><br><span class="line">=== Case 2 ===</span><br><span class="line">case 2: mmap at 0x7fffc163a000 (RW): failed (File exists)</span><br><span class="line">case 2: growing stack by one page...</span><br><span class="line">stack: [0x7fffc1639000, 0x7fffc165c000], size: 140 KiB</span><br><span class="line"></span><br><span class="line">=== Case 3 ===</span><br><span class="line">case 3: mmap at 0x7fffc15ba000 (RW): succeeded</span><br><span class="line">case 3: growing stack by one page...</span><br><span class="line">case 3: terminated by Segmentation fault</span><br><span class="line"></span><br><span class="line">=== Case 4 ===</span><br><span class="line">case 4: mmap at 0x7fffc15ba000 (NONE): succeeded</span><br><span class="line">case 4: growing stack by one page...</span><br><span class="line">stack: [0x7fffc1639000, 0x7fffc165c000], size: 140 KiB</span><br><span class="line"></span><br><span class="line">=== Case 5 ===</span><br><span class="line">case 5: mmap at 0x7fffc1639000 (NONE): succeeded</span><br><span class="line">case 5: growing stack by one page...</span><br><span class="line">case 5: terminated by Segmentation fault</span><br><span class="line"></span><br><span class="line">=== Case 6 ===</span><br><span class="line">case 6: mmap at 0x7fffc1538000 (RW): succeeded</span><br><span class="line">case 6: growing stack by one page...</span><br><span class="line">stack: [0x7fffc1639000, 0x7fffc165c000], size: 140 KiB</span><br></pre></td></tr></table></figure>
+<p>The guard gap protects the stack from growing too close to accessible memory.
+It does not require all 256 pages to remain unmapped. Linux permits an
+inaccessible <code>PROT_NONE</code> VMA within that distance, then stops growth when the
+stack reaches the VMA itself.</p>
+<h2 id="References"><a class="header-anchor" href="#References">§</a>References</h2>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/master/mm/vma.c">Linux <code>expand_downwards()</code></a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/torvalds/linux/blob/master/Documentation/admin-guide/kernel-parameters.txt">Linux <code>stack_guard_gap</code> kernel parameter</a></li>
+<li><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man2/mmap.2.html"><code>mmap(2)</code></a></li>
+<li><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man5/proc_pid_maps.5.html"><code>proc_pid_maps(5)</code></a></li>
+<li><a target="_blank" rel="noopener" href="https://man7.org/linux/man-pages/man2/fork.2.html"><code>fork(2)</code></a></li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>

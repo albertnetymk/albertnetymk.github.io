@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="Rebalancing Linux Pages Across NUMA Nodes"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2026/06/27/madvise_numa_rebalance/"/>
+
+
+<meta name="description" content="Rebalancing pages across NUMA nodes can improve locality. After the CPU-side owner of a memory range changes, keeping its pages on the old node can turn future accesses into remote accesses. For disca">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Rebalancing Linux Pages Across NUMA Nodes">
+<meta property="og:url" content="https://albertnetymk.github.io/2026/06/27/madvise_numa_rebalance/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="Rebalancing pages across NUMA nodes can improve locality. After the CPU-side owner of a memory range changes, keeping its pages on the old node can turn future accesses into remote accesses. For disca">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-06-27T08:57:46.000Z">
+<meta property="article:modified_time" content="2026-06-27T10:14:35.223Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+
+
+
+    <title> Rebalancing Linux Pages Across NUMA Nodes - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 8.1.1"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          Rebalancing Linux Pages Across NUMA Nodes
+        
+      </h1>
+
+      <time class="post-time">
+          Jun 27 2026
+      </time>
+    </header>
+
+    <div class="post-content">
+    <p>Rebalancing pages across NUMA nodes can improve locality. After the CPU-side owner of a memory range changes, keeping its pages on the old node can turn future accesses into remote accesses. For discardable anonymous memory, Linux can do this without page migration. The usual sequence is to discard the old pages first, set the NUMA policy for future faults, then touch the range so Linux allocates new pages on the preferred node. <code>move_pages</code> can be used for verification.</p>
+<ol>
+<li><code>madvise(MADV_DONTNEED)</code>: discard resident pages in the range.</li>
+<li><code>set_mempolicy(MPOL_PREFERRED)</code>: choose the preferred node for future faults.</li>
+<li>Later memory access: refault the page under the current policy.</li>
+<li><code>move_pages(..., nodes = NULL, ...)</code>: query page locations and verify that the new pages landed on the desired nodes.</li>
+</ol>
+<p><code>MPOL_PREFERRED</code> can fall back if the requested node cannot satisfy the allocation. In contrast, use <code>MPOL_BIND</code> when fallback should be treated as failure.</p>
+<p>This is discard and refault, not migration. The old contents are gone.</p>
+<p>The program below verifies the behavior for one normal anonymous page and one 2MB anonymous <code>MAP_HUGETLB</code> page. It faults each mapping on node 0, discards the page, prefers node 1, then refaults. For the HugeTLB test, reserve some 2MB huge page on each node first:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">echo 10 | sudo tee /sys/devices/system/node/node0/hugepages/hugepages-2048kB/nr_hugepages</span><br><span class="line">echo 10 | sudo tee /sys/devices/system/node/node1/hugepages/hugepages-2048kB/nr_hugepages</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;errno.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;limits.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;linux/mempolicy.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;sys/syscall.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">prefer</span><span class="params">(<span class="type">int</span> node, <span class="type">const</span> <span class="type">char</span>* label)</span> &#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">unsigned</span> <span class="type">long</span> mask = <span class="number">1UL</span> &lt;&lt; (<span class="type">unsigned</span> <span class="type">int</span>)node;</span><br><span class="line">  <span class="type">const</span> <span class="type">unsigned</span> <span class="type">long</span> maxnode = <span class="keyword">sizeof</span>(mask) * CHAR_BIT;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (syscall(SYS_set_mempolicy, MPOL_PREFERRED, &amp;mask, maxnode) != <span class="number">0</span>) &#123;</span><br><span class="line">    perror(<span class="string">&quot;set_mempolicy(MPOL_PREFERRED)&quot;</span>);</span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">1</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;%-18s MPOL_PREFERRED node %d\n&quot;</span>, label, node);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">print_node</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* label, <span class="type">char</span>* addr)</span> &#123;</span><br><span class="line">  <span class="type">void</span>* page = addr;</span><br><span class="line">  <span class="type">int</span> status = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (syscall(SYS_move_pages, <span class="number">0</span>, <span class="number">1</span>, &amp;page, <span class="literal">NULL</span>, &amp;status, <span class="number">0</span>) != <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%-18s move_pages: %s\n&quot;</span>, label, strerror(errno));</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (status &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%-18s node %d\n&quot;</span>, label, status);</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (status == -ENOENT) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%-18s not resident\n&quot;</span>, label);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;%-18s error %d\n&quot;</span>, label, -status);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">static</span> <span class="type">void</span> <span class="title function_">test</span><span class="params">(<span class="type">const</span> <span class="type">char</span>* name, <span class="type">size_t</span> len, <span class="type">int</span> flags)</span> &#123;</span><br><span class="line">  <span class="type">char</span>* addr;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;%s (%zu bytes)\n&quot;</span>, name, len);</span><br><span class="line"></span><br><span class="line">  prefer(<span class="number">0</span>, <span class="string">&quot;first fault&quot;</span>);</span><br><span class="line"></span><br><span class="line">  addr = mmap(<span class="literal">NULL</span>, len, PROT_READ | PROT_WRITE,</span><br><span class="line">              MAP_PRIVATE | MAP_ANONYMOUS | flags, <span class="number">-1</span>, <span class="number">0</span>);</span><br><span class="line">  <span class="keyword">if</span> (addr == MAP_FAILED) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;mmap: %s\n\n&quot;</span>, strerror(errno));</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  print_node(<span class="string">&quot;after mmap&quot;</span>, addr);</span><br><span class="line"></span><br><span class="line">  addr[<span class="number">0</span>] = <span class="number">1</span>;</span><br><span class="line">  print_node(<span class="string">&quot;after fault&quot;</span>, addr);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (madvise(addr, len, MADV_DONTNEED) != <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;madvise(MADV_DONTNEED): %s\n\n&quot;</span>, strerror(errno));</span><br><span class="line">    munmap(addr, len);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  print_node(<span class="string">&quot;after dontneed&quot;</span>, addr);</span><br><span class="line"></span><br><span class="line">  prefer(<span class="number">1</span>, <span class="string">&quot;refault&quot;</span>);</span><br><span class="line">  addr[<span class="number">0</span>] = <span class="number">2</span>;</span><br><span class="line">  print_node(<span class="string">&quot;after refault&quot;</span>, addr);</span><br><span class="line"></span><br><span class="line">  munmap(addr, len);</span><br><span class="line">  <span class="built_in">putchar</span>(<span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">void</span>)</span> &#123;</span><br><span class="line">  <span class="type">const</span> <span class="type">size_t</span> huge_page_size = <span class="number">2UL</span> * <span class="number">1024</span> * <span class="number">1024</span>;</span><br><span class="line">  <span class="type">long</span> page_size = sysconf(_SC_PAGESIZE);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (page_size &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">    perror(<span class="string">&quot;sysconf(_SC_PAGESIZE)&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  setbuf(<span class="built_in">stdout</span>, <span class="literal">NULL</span>);</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;policy: MPOL_PREFERRED\n\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  test(<span class="string">&quot;normal page&quot;</span>, (<span class="type">size_t</span>)page_size, <span class="number">0</span>);</span><br><span class="line">  test(<span class="string">&quot;hugetlb page&quot;</span>, huge_page_size, MAP_HUGETLB);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>Sample output:</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">policy: MPOL_PREFERRED</span><br><span class="line"></span><br><span class="line">normal page (4096 bytes)</span><br><span class="line">first fault        MPOL_PREFERRED node 0</span><br><span class="line">after mmap         not resident</span><br><span class="line">after fault        node 0</span><br><span class="line">after dontneed     not resident</span><br><span class="line">refault            MPOL_PREFERRED node 1</span><br><span class="line">after refault      node 1</span><br><span class="line"></span><br><span class="line">hugetlb page (2097152 bytes)</span><br><span class="line">first fault        MPOL_PREFERRED node 0</span><br><span class="line">after mmap         not resident</span><br><span class="line">after fault        node 0</span><br><span class="line">after dontneed     not resident</span><br><span class="line">refault            MPOL_PREFERRED node 1</span><br><span class="line">after refault      node 1</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>
