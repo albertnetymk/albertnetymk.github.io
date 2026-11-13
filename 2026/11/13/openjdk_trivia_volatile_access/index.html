@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="default">
+  <head>
+    
+<meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1">
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+  <meta name="description" content="OpenJDK Trivia: Volatile Access on RISC-V"/>
+
+
+
+
+
+
+
+
+  <link rel="alternate" href="/default" title="albertnetymk's notes" >
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/favicon.png?v=1.2" />
+
+
+
+<link rel="canonical" href="https://albertnetymk.github.io/2026/11/13/openjdk_trivia_volatile_access/"/>
+
+
+<meta name="description" content="§1. JMM and C2 Volatile writes have release semantics; volatile reads have acquire semantics. Volatile accesses also participate in a total synchronization order consistent with program order. Release">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenJDK Trivia: Volatile Access on RISC-V">
+<meta property="og:url" content="https://albertnetymk.github.io/2026/11/13/openjdk_trivia_volatile_access/index.html">
+<meta property="og:site_name" content="albertnetymk&#39;s notes">
+<meta property="og:description" content="§1. JMM and C2 Volatile writes have release semantics; volatile reads have acquire semantics. Volatile accesses also participate in a total synchronization order consistent with program order. Release">
+<meta property="og:locale">
+<meta property="article:published_time" content="2026-11-13T09:39:00.000Z">
+<meta property="article:modified_time" content="2026-11-13T09:40:53.500Z">
+<meta property="article:author" content="Albert Netymk">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="stylesheet" type="text/css" href="/css/style.css?v=1.2" />
+<link href='https://fonts.googleapis.com/css2?family=Roboto&display=swap' rel='stylesheet'>
+
+
+
+
+
+<script type="text/javascript">
+  var themeConfig = {
+    fancybox: {
+      enable: false
+    },
+  };
+</script>
+
+
+
+
+  
+
+
+
+
+
+
+    <title> OpenJDK Trivia: Volatile Access on RISC-V - albertnetymk's notes </title>
+  <meta name="generator" content="Hexo 8.1.1"></head>
+
+  <body>
+    <div id="page">
+      <header id="masthead"><div class="site-header-inner">
+    <h1 class="site-title">
+        <a href="/." class="logo">albertnetymk's notes</a>
+    </h1>
+
+    <nav id="nav-top">
+        
+            <ul id="menu-top" class="nav-top-items">
+                
+                    <li class="menu-item">
+                        <a href="/archives">
+                            
+                            
+                                Archives
+                            
+                        </a>
+                    </li>
+                
+                    <li class="menu-item">
+                        <a href="/about">
+                            
+                            
+                                About
+                            
+                        </a>
+                    </li>
+                
+            </ul>
+        
+  </nav>
+</div>
+
+      </header>
+      <div id="content">
+        
+    <div id="primary">
+        
+  <article class="post">
+    <header class="post-header">
+      <h1 class="post-title">
+        
+          OpenJDK Trivia: Volatile Access on RISC-V
+        
+      </h1>
+
+      <time class="post-time">
+          Nov 13 2026
+      </time>
+    </header>
+
+    <div class="post-content">
+    <h2 id="1-JMM-and-C2"><a class="header-anchor" href="#1-JMM-and-C2">§</a>1. JMM and C2</h2>
+<p>Volatile writes have release semantics; volatile reads have acquire semantics. Volatile accesses also participate in a total synchronization order consistent with program order. Release/acquire alone is therefore insufficient: a volatile write followed by a volatile read needs StoreLoad ordering.</p>
+<p><code>BarrierSetC2::load_at()</code> and <code>BarrierSetC2::store_at()</code> use <code>C2AccessFence</code> in <code>barrierSetC2.cpp</code> to insert these Ideal nodes for multi-copy-atomic targets (x64, AArch64, and RISC-V):</p>
+<table>
+<thead>
+<tr>
+<th>Access</th>
+<th>C2 Ideal sequence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Volatile read</td>
+<td><code>Load</code><br><code>MemBarAcquire</code></td>
+</tr>
+<tr>
+<td>Volatile write</td>
+<td><code>MemBarRelease</code><br><code>Store</code><br><code>MemBarVolatile</code></td>
+</tr>
+<tr>
+<td>Seq-cst CAS</td>
+<td><code>MemBarRelease</code><br><code>CAS (LoadStore)</code><br><code>MemBarAcquire</code></td>
+</tr>
+</tbody>
+</table>
+<p>On PPC64, C2 instead uses a leading <code>MemBarVolatile</code> for volatile reads and seq-cst CAS, and omits the trailing one after volatile stores.</p>
+<p>These nodes express ordering requirements. Instruction selection can satisfy them with fences, instruction ordering bits, or the target memory model.</p>
+<h2 id="2-RISC-V-code-generation"><a class="header-anchor" href="#2-RISC-V-code-generation">§</a>2. RISC-V code generation</h2>
+<p>Representative 32-bit accesses. Operands and CAS comparison/retry branches are omitted; <code>+</code> separates instructions.</p>
+<table>
+<thead>
+<tr>
+<th>Access</th>
+<th>RVWMO</th>
+<th>RVWMO + Zalasr</th>
+<th>Ztso</th>
+<th>Ztso + Zalasr</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Plain load</td>
+<td><code>lw</code></td>
+<td><code>lw</code></td>
+<td><code>lw</code></td>
+<td><code>lw</code></td>
+</tr>
+<tr>
+<td>Plain store</td>
+<td><code>sw</code></td>
+<td><code>sw</code></td>
+<td><code>sw</code></td>
+<td><code>sw</code></td>
+</tr>
+<tr>
+<td>Volatile load</td>
+<td><code>lw</code> + <code>fence r, rw</code></td>
+<td><code>lw.aq</code></td>
+<td><code>lw</code></td>
+<td><code>lw.aq</code></td>
+</tr>
+<tr>
+<td>Volatile store</td>
+<td><code>fence rw, w</code> + <code>sw</code> + <code>fence w, r</code></td>
+<td><code>sw.rl</code></td>
+<td><code>sw</code> + <code>fence w, r</code></td>
+<td><code>sw.rl</code></td>
+</tr>
+<tr>
+<td>Seq-cst CAS (LR/SC)</td>
+<td><code>lr.w.aq</code> + <code>sc.w.aqrl</code></td>
+<td><code>lr.w.aq</code> + <code>sc.w.rl</code></td>
+<td><code>lr.w.aq</code> + <code>sc.w.aqrl</code></td>
+<td><code>lr.w.aq</code> + <code>sc.w.rl</code></td>
+</tr>
+<tr>
+<td>Seq-cst CAS (Zacas)</td>
+<td><code>amocas.w.aqrl</code></td>
+<td><code>amocas.w.aqrl</code></td>
+<td><code>amocas.w.aqrl</code></td>
+<td><code>amocas.w.aqrl</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>RVWMO needs explicit acquire, release, and StoreLoad fences for ordinary loads/stores used as volatile accesses.</li>
+<li>Zalasr carries ordering in <code>lw.aq</code> / <code>sw.rl</code>, allowing HotSpot to omit those fences.</li>
+<li>Ztso makes acquire/release fences unnecessary, but still permits StoreLoad reordering, so <code>fence w, r</code> remains after a volatile store.</li>
+</ul>
+
+    </div>
+
+  </article>
+
+    </div>
+
+      </div>
+
+      <footer id="colophon"><span class="copyright-year">
+    
+        &copy;
+    
+        2013 -
+    
+    2026
+    <span class="footer-author">Albert Netymk.</span>
+    <span class="power-by">
+        Powered by <a class="hexo-link" target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a> and <a class="theme-link" target="_blank" rel="noopener" href="https://github.com/albertnetymk/hexo-theme-polarbearremix">Polar Bear Remix</a>
+    </span>
+</span>
+
+      </footer>
+
+      <div class="back-to-top" id="back-to-top">
+        <i class="iconfont icon-up"></i>
+      </div>
+    </div>
+    
+
+
+    <script
+      src="https://code.jquery.com/jquery-3.5.1.min.js"
+      integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
+      crossorigin="anonymous"></script>
+    <script type="text/javascript"
+      src="https://cdnjs.cloudflare.com/ajax/libs/fancybox/3.5.7/jquery.fancybox.min.js">
+    </script>
+    <script type="text/javascript" src="/js/src/theme.js?v=1.2"></script>
+<script type="text/javascript" src="/js/src/bootstrap.js?v=1.2"></script>
+
+  </body>
+</html>
